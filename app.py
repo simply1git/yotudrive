@@ -41,6 +41,11 @@ def test_api():
         'timestamp': time.time()
     })
 
+@app.route('/ping')
+def ping():
+    """Simple ping endpoint"""
+    return "pong"
+
 # WebSocket events
 @socketio.on('connect')
 def handle_connect():
