@@ -1,8 +1,4 @@
-numpy
-Pillow
-imageio-ffmpeg
-tqdm
-yt-dlp
-requests
-cryptography
-reedsolo
+# Ultra-minimal requirements for deployment
+Flask==2.3.3
+requests==2.31.0
+gunicorn==21.2.0
