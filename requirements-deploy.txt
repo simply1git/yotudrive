@@ -1,12 +1,9 @@
-# Minimal requirements for deployment
+# Minimal requirements for deployment - using pre-built wheels
 Flask==2.3.3
 Flask-SocketIO==5.3.6
 requests==2.31.0
 cryptography==41.0.7
-Pillow==10.0.1
 numpy==1.24.3
-imageio-ffmpeg==0.4.9
-yt-dlp==2023.10.13
 tqdm==4.66.1
 reedsolo==1.7.0
 gunicorn==21.2.0
