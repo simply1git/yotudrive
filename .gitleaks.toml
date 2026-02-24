@@ -1,0 +1,162 @@
+title = "YotuDrive Gitleaks Configuration"
+
+# Extend the default Gitleaks configuration
+[extend]
+useDefault = true
+
+# Custom rules for YotuDrive
+[[rules]]
+description = "YotuDrive API Key"
+id = "yotudrive-api-key"
+regex = '''(?i)(yotudrive[_-]?api[_-]?key|yotudrive[_-]?token|yotudrive[_-]?secret)[\s:=]+['\"]?([a-zA-Z0-9_\-]{16,})['\"]?'''
+keywords = ["yotudrive", "api", "key", "token", "secret"]
+
+[[rules]]
+description = "YouTube API Key"
+id = "youtube-api-key"
+regex = '''(?i)(youtube[_-]?api[_-]?key|youtube[_-]?token|youtube[_-]?secret)[\s:=]+['\"]?([a-zA-Z0-9_\-]{16,})['\"]?'''
+keywords = ["youtube", "api", "key", "token", "secret"]
+
+[[rules]]
+description = "Database Connection String"
+id = "database-connection"
+regex = '''(?i)(database[_-]?url|db[_-]?connection|connection[_-]?string)[\s:=]+['\"]?([a-zA-Z0-9_\-:/@.]+)['\"]?'''
+keywords = ["database", "connection", "url", "string"]
+
+[[rules]]
+description = "Encryption Key"
+id = "encryption-key"
+regex = '''(?i)(encryption[_-]?key|fernet[_-]?key|secret[_-]?key)[\s:=]+['\"]?([A-Za-z0-9+/]{32,})['\"]?'''
+keywords = ["encryption", "key", "fernet", "secret"]
+
+[[rules]]
+description = "Password in configuration"
+id = "config-password"
+regex = '''(?i)(password|passwd|pwd)[\s:=]+['\"]?([^\s'\"]{4,})['\"]?'''
+keywords = ["password", "passwd", "pwd"]
+
+# Allowlist for false positives
+[allowlist]
+description = "Global Allowlist"
+paths = [
+  '''tests/''',
+  '''test_''',
+  '''_test\.py$''',
+  '''\.git/''',
+  '''node_modules/''',
+  '''venv/''',
+  '''\.venv/''',
+  '''__pycache__/''',
+  '''build/''',
+  '''dist/''',
+  '''\.egg-info/''',
+  '''htmlcov/''',
+  '''\.coverage''',
+  '''coverage\.xml''',
+  '''bandit-report\.json''',
+  '''safety-report\.json''',
+  '''pip-audit-report\.json''',
+  '''semgrep-report\.json''',
+  '''trivy-results\.sarif'''
+]
+
+# Target specific files for scanning
+[target]
+files = [
+  '''src/.*\.py$''',
+  '''config\.py$''',
+  '''settings\.json$''',
+  '''\.env$''',
+  '''\.env\..*$''',
+  '''docker-compose\.yml$''',
+  '''Dockerfile$''',
+  '''requirements.*\.txt$''',
+  '''setup\.py$''',
+  '''pyproject\.toml$'''
+]
+
+# Exclude certain files from scanning
+[exclude]
+files = [
+  '''.*\.md$''',
+  '''.*\.txt$''',
+  '''.*\.log$''',
+  '''.*\.bak$''',
+  '''.*\.tmp$''',
+  '''.*\.swp$''',
+  '''.*\.swo$''',
+  '''.*~$''',
+  '''.*\.orig$''',
+  '''.*\.rej$''',
+  '''\.git/.*''',
+  '''tests/.*''',
+  '''test_.*''',
+  '''_test\.py$''',
+  '''conftest\.py$''',
+  '''mock_.*\.py$''',
+  '''fixture.*\.py$''',
+  '''__pycache__/.*''',
+  '''\.pytest_cache/.*''',
+  '''\.mypy_cache/.*''',
+  '''\.coverage''',
+  '''coverage\.xml''',
+  '''htmlcov/.*''',
+  '''bandit-report\.json''',
+  '''safety-report\.json''',
+  '''pip-audit-report\.json''',
+  '''semgrep-report\.json''',
+  '''trivy-results\.sarif''',
+  '''\.venv/.*''',
+  '''venv/.*''',
+  '''env/.*''',
+  '''build/.*''',
+  '''dist/.*''',
+  '''\.egg-info/.*''',
+  '''.*\.egg-info/.*''',
+  '''site-packages/.*''',
+  '''\.tox/.*''',
+  '''\.nox/.*''',
+  '''\.cache/.*''',
+  '''\.tmp/.*''',
+  '''temp/.*''',
+  '''tmp/.*''',
+  '''logs/.*''',
+  '''backups/.*''',
+  '''data/.*''',
+  '''output_frames/.*''',
+  '''test_frames/.*''',
+  '''test_restore_frames/.*'''
+]
+
+paths = [
+  '''\.git''',
+  '''__pycache__''',
+  '''\.pytest_cache''',
+  '''\.mypy_cache''',
+  '''\.coverage''',
+  '''htmlcov''',
+  '''\.venv''',
+  '''venv''',
+  '''env''',
+  '''build''',
+  '''dist''',
+  '''\.egg-info''',
+  '''node_modules''',
+  '''\.tox''',
+  '''\.nox''',
+  '''\.cache''',
+  '''\.tmp''',
+  '''temp''',
+  '''tmp''',
+  '''logs''',
+  '''backups''',
+  '''data''',
+  '''output_frames''',
+  '''test_frames''',
+  '''test_restore_frames''',
+  '''tests''',
+  '''docs/_build''',
+  '''\.vscode''',
+  '''\.idea''',
+  '''\.DS_Store'''
+]

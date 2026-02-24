@@ -1,0 +1,230 @@
+name: YotuDrive CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.11', '3.12']
+        exclude:
+          # Exclude some combinations to reduce CI time
+          - os: windows-latest
+            python-version: '3.10'
+          - os: ubuntu-latest
+            python-version: '3.12'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run linting
+      run: |
+        flake8 src tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        black --check src tests
+        isort --check-only src tests
+
+    - name: Run type checking
+      run: |
+        mypy src --ignore-missing-imports --no-strict-optional
+
+    - name: Run security scan
+      run: |
+        bandit -r src -f json -o bandit-report.json || true
+        safety check --json --output safety-report.json || true
+        pip-audit --format=json --output=pip-audit-report.json || true
+
+    - name: Run tests
+      run: |
+        pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-fail-under=80
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+          htmlcov/
+          bandit-report.json
+          safety-report.json
+          pip-audit-report.json
+          coverage.xml
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        sudo apt-get update && sudo apt-get install -y ffmpeg
+
+    - name: Run integration tests
+      run: |
+        pytest tests/ -v -m integration --timeout=300
+
+    - name: Test CLI functionality
+      run: |
+        python -m src.cli --help
+        echo "test content" > test_file.txt
+        python -m src.cli encode test_file.txt --output test_frames || true
+        rm -rf test_frames test_file.txt
+
+  build:
+    runs-on: ${{ matrix.os }}
+    needs: test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Build executable
+      run: |
+        python build_exe.py
+
+    - name: Test executable
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          ./dist/YotuDrive/main_gui --help || true
+        else
+          ./dist/YotuDrive/main_gui.exe --help || true
+        fi
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: yotudrive-${{ matrix.os }}
+        path: dist/
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [test, integration-test, build]
+    if: github.event_name == 'release'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller build
+        sudo apt-get update && sudo apt-get install -y ffmpeg
+
+    - name: Build release
+      run: |
+        python build_exe.py
+        python -m build
+
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./dist/YotuDrive/main_gui
+        asset_name: yotudrive-linux
+        asset_content_type: application/octet-stream
+
+    - name: Publish to PyPI
+      if: github.event_name == 'release'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        twine upload dist/*
