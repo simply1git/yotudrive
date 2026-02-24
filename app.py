@@ -41,20 +41,6 @@ def test_api():
         'timestamp': time.time()
     })
 
-@app.route('/health')
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': time.time(),
-        'version': '2.0.0',
-        'services': {
-            'database': 'connected',
-            'api_services': 'active',
-            'privacy_security': 'enabled'
-        }
-    })
-
 @app.route('/ping')
 def ping():
     """Simple ping endpoint"""
