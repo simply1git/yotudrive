@@ -1,17 +1,14 @@
 """
 YotuDrive 2.0 - Simplified Production App
-Minimal deployment version for Railway
+Minimal deployment version for Render
 """
 
 import os
 import time
 from flask import Flask, jsonify, render_template
-from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-
-socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route('/')
 def index():
@@ -41,17 +38,19 @@ def test_api():
         'timestamp': time.time()
     })
 
-# WebSocket events
-@socketio.on('connect')
-def handle_connect():
-    """Handle WebSocket connection"""
-    emit('connected', {'message': 'Connected to YotuDrive 2.0'})
+@app.route('/ping')
+def ping():
+    """Simple ping endpoint"""
+    return "pong"
 
-@socketio.on('disconnect')
-def handle_disconnect():
-    """Handle WebSocket disconnection"""
-    print('Client disconnected')
+@app.route('/ws')
+def websocket_test():
+    """WebSocket test endpoint"""
+    return jsonify({
+        'message': 'WebSocket endpoint available',
+        'status': 'websocket_ready'
+    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    socketio.run(app, host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=False)
