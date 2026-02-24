@@ -3,29 +3,18 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    yt-dlp \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements
-COPY requirements.txt .
-COPY requirements-ai.txt .
+# Copy minimal requirements
+COPY requirements-deploy.txt requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r requirements-ai.txt
 
-# Copy application
-COPY . .
-
-# Create necessary directories
-RUN mkdir -p data logs recovery_data temp
+# Copy only necessary files
+COPY app.py .
+COPY web_app/ web_app/
 
 # Set environment variables
-ENV FLASK_APP=web_app.production_app
+ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app
 
@@ -34,7 +23,7 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD curl -f http://localhost:5000/ping || exit 1
 
 # Start application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "web_app.production_app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "app:app"]
