@@ -1,0 +1,6 @@
+# Ultra-minimal requirements for deployment
+Flask==2.3.3
+Flask-SocketIO==5.3.6
+requests==2.31.0
+gunicorn==21.2.0
+python-socketio==5.9.0
