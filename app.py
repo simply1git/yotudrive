@@ -63,7 +63,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': time.time(),
-        'version': '2.0.0',
+        'version': '2.0.1',
         'services': {
             'database': 'connected',
             'api_services': 'active',
