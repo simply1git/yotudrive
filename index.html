@@ -579,7 +579,7 @@
         // Global variables
         let currentSession = null;
         let socket = null;
-        const API_BASE = 'https://yotudrive.onrender.com';
+        const API_BASE = 'https://yotudrive.onrender.com'; // Reverting to confirmed base URL
         const VERCEL_URL = 'https://yotudrive.vercel.app';
 
         // Fix for OAuth redirect: use the current origin if on Vercel
@@ -642,11 +642,59 @@
             }
         }
 
+        // Check backend health on load
+        async function checkBackendHealth() {
+            const statusIndicator = document.createElement('div');
+            statusIndicator.id = 'api-status-indicator';
+            statusIndicator.className = 'fixed bottom-4 right-4 flex items-center space-x-2 bg-black/50 backdrop-blur-md p-2 px-3 rounded-full text-xs border border-white/10 z-[100]';
+            statusIndicator.innerHTML = `
+                <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                <span class="text-gray-300">API: Connecting...</span>
+            `;
+            document.body.appendChild(statusIndicator);
+
+            try {
+                // Try health check with a timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch(`${API_BASE}/health`, { 
+                    signal: controller.signal,
+                    mode: 'cors'
+                });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('[DEBUG] Backend health check:', data);
+                    statusIndicator.innerHTML = `
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span class="text-gray-300">API: Online</span>
+                    `;
+                    setTimeout(() => statusIndicator.classList.add('opacity-0'), 3000);
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('[ERROR] Backend health check failed:', error);
+                statusIndicator.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span class="text-gray-300">API: Offline (Error)</span>
+                `;
+                // Show more detailed error info in console for the user
+                console.warn('%c[YotuDrive] API Connection failed. Possible reasons:', 'color: orange; font-weight: bold;');
+                console.warn('1. Backend might be sleeping (Render Free Tier spins down after inactivity)');
+                console.warn('2. SSL/HTTPS handshake issue');
+                console.warn('3. CORS policy blocking (though backend is configured to allow all)');
+            }
+        }
+
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
             setupFileUpload();
             setupEventListeners();
+            checkBackendHealth();
         });
 
         function initializeApp() {
