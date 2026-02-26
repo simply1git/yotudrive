@@ -16,109 +16,93 @@
             color: #e2e8f0;
         }
         .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
         }
         .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            font-weight: 800;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 12px;
-            font-weight: 500;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 14px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
         }
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+            filter: brightness(1.1);
         }
-        .btn-secondary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 12px;
-            font-weight: 500;
-        }
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(245, 87, 108, 0.3);
+        .btn-primary:active {
+            transform: translateY(-1px);
         }
         .feature-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 16px;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
         }
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-        .upload-area {
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 16px;
-        }
-        .upload-area:hover {
-            border-color: rgba(102, 126, 234, 0.6);
-            background: rgba(102, 126, 234, 0.05);
-        }
-        .progress-bar {
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .modal {
-            display: none;
-            position: fixed;
+        .feature-card::before {
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.5s;
         }
-        .modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .feature-card:hover::before {
+            opacity: 1;
         }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            transition: all 0.4s ease;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.02);
         }
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(0); }
-        }
-        .input-field {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .input-field:focus {
-            border-color: rgba(102, 126, 234, 0.5);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .upload-area.dragging {
+            border-color: #818cf8;
+            background: rgba(129, 140, 248, 0.08);
+            transform: scale(1.01);
         }
         .nav-link {
             transition: all 0.3s ease;
-            border-radius: 8px;
-            padding: 8px 16px;
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-weight: 500;
         }
         .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+            color: #818cf8;
         }
         .nav-link.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.3);
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating {
+            animation: float 4s ease-in-out infinite;
         }
         .loading-spinner {
             border: 2px solid rgba(255, 255, 255, 0.1);
@@ -702,62 +686,73 @@
                     })
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentSession = data.session_id;
-                    localStorage.setItem('yotudrive_session', currentSession);
-
-                    updateUIForLoggedIn(data.user);
-                    connectWebSocket();
-                    loadDashboard();
-
-                    closeModal();
-                    showStatusModal('success', 'Welcome to YotuDrive!', 'You are now logged in and ready to use all features.');
-
-                    // Redirect to dashboard after a moment
-                    setTimeout(() => {
-                        closeModal();
-                        showSection('dashboard');
-                    }, 2000);
-
-                } else {
-                    throw new Error(data.error || 'Authentication failed');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Authentication failed');
                 }
+
+                const data = await response.json();
+                currentSession = data.session_id;
+                localStorage.setItem('yotudrive_session', currentSession);
+                localStorage.setItem('yotudrive_user', JSON.stringify(data.user));
+
+                updateUIForLoggedIn(data.user);
+                connectWebSocket();
+                loadDashboard();
+
+                closeModal();
+                showStatusModal('success', 'Welcome to YotuDrive!', `Successfully signed in as ${data.user.name || 'User'}`);
+
+                setTimeout(() => {
+                    closeModal();
+                    showSection('dashboard');
+                }, 2000);
 
             } catch (error) {
                 closeModal();
                 showStatusModal('error', 'Authentication Failed', error.message);
+                console.error('Login error:', error);
             }
         }
 
         function updateUIForLoggedIn(user = null) {
+            if (!user) {
+                const savedUser = localStorage.getItem('yotudrive_user');
+                if (savedUser) user = JSON.parse(savedUser);
+            }
+
             document.getElementById('login-modal').classList.remove('show');
             document.getElementById('landing-section').classList.add('hidden');
 
             // Show navigation and user profile
-            document.querySelectorAll('.nav-link').forEach(btn => {
-                btn.classList.remove('hidden');
+            const navButtons = ['dashboard-btn', 'upload-btn', 'recover-btn', 'search-btn', 'settings-btn'];
+            navButtons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.classList.remove('hidden');
             });
+            
             document.getElementById('login-btn').classList.add('hidden');
             document.getElementById('user-profile').classList.remove('hidden');
 
             if (user) {
-                document.getElementById('user-name').textContent = user.display_name || user.username || 'User';
+                document.getElementById('user-name').textContent = user.name || user.display_name || user.email || 'User';
             }
 
-            // Show dashboard by default
             showSection('dashboard');
         }
 
         function logout() {
-            currentSession = null;
             localStorage.removeItem('yotudrive_session');
+            localStorage.removeItem('yotudrive_user');
+            currentSession = null;
 
             // Reset UI
-            document.querySelectorAll('.nav-link').forEach(btn => {
-                btn.classList.add('hidden');
+            const navButtons = ['dashboard-btn', 'upload-btn', 'recover-btn', 'search-btn', 'settings-btn'];
+            navButtons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.classList.add('hidden');
             });
+            
             document.getElementById('login-btn').classList.remove('hidden');
             document.getElementById('user-profile').classList.add('hidden');
 
@@ -774,7 +769,10 @@
             }
 
             showStatusModal('success', 'Logged Out', 'You have been successfully logged out.');
-            setTimeout(closeModal, 1500);
+            setTimeout(() => {
+                closeModal();
+                window.location.reload();
+            }, 1500);
         }
 
         function connectWebSocket() {
@@ -814,10 +812,35 @@
         }
 
         function updateDashboardStats(data) {
-            document.getElementById('upload-count').textContent = data.stats?.uploaded_files || 0;
-            document.getElementById('recover-count').textContent = data.stats?.recovered_files || 0;
-            document.getElementById('security-status').textContent = data.privacy_compliance ? 'Compliant' : 'Review Needed';
-            document.getElementById('ai-status').textContent = 'Active';
+            document.getElementById('upload-count').textContent = data.total_files || 0;
+            document.getElementById('recover-count').textContent = data.recoveries_this_month || 0;
+            document.getElementById('security-status').textContent = 'Active';
+            document.getElementById('ai-status').textContent = 'Ready';
+            
+            // Update analytics section if visible
+            const analyticsDiv = document.getElementById('analytics-data');
+            if (analyticsDiv) {
+                analyticsDiv.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4 text-left">
+                        <div class="p-4 bg-white/5 rounded-lg">
+                            <p class="text-sm text-gray-400">Total Files</p>
+                            <p class="text-xl font-bold">${data.total_files || 0}</p>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-lg">
+                            <p class="text-sm text-gray-400">Storage Used</p>
+                            <p class="text-xl font-bold">${data.storage_used || '0 B'}</p>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-lg">
+                            <p class="text-sm text-gray-400">Monthly Uploads</p>
+                            <p class="text-xl font-bold">${data.uploads_this_month || 0}</p>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-lg">
+                            <p class="text-sm text-gray-400">Storage Limit</p>
+                            <p class="text-xl font-bold">${data.storage_limit || '10 GB'}</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         function setupFileUpload() {
@@ -853,168 +876,173 @@
             area.style.background = '';
         }
 
-        function handleFiles(files) {
+        async function handleFiles(files) {
             if (!currentSession) {
                 showLoginModal();
                 return;
             }
 
             const fileList = Array.from(files);
-            startUploadSession(fileList);
-        }
+            const simplifiedFiles = fileList.map(f => ({
+                name: f.name,
+                size: f.size,
+                type: f.type
+            }));
 
-        async function startUploadSession(files) {
             try {
-                showLoadingModal('Starting Upload', 'Initializing upload session...');
-
+                showLoadingModal('Initializing', 'Creating upload session...');
                 const response = await fetch(`${API_BASE}/api/upload/start`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${currentSession}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentSession}`
                     },
-                    body: JSON.stringify({
-                        files: files.map(f => ({name: f.name, size: f.size, type: f.type})),
-                        method: 'web'
-                    })
+                    body: JSON.stringify({ files: simplifiedFiles })
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    showUploadForm(data.file_inputs);
-                } else {
-                    throw new Error(data.error);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to start upload');
                 }
+
+                const data = await response.json();
+                closeModal();
+                
+                // Show details form
+                document.getElementById('upload-area').parentElement.classList.add('hidden');
+                document.getElementById('upload-form').classList.remove('hidden');
+                
+                const detailsContainer = document.getElementById('file-details');
+                detailsContainer.innerHTML = simplifiedFiles.map((f, i) => `
+                    <div class="p-6 bg-black bg-opacity-20 rounded-xl border border-white/10 mb-4">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fas fa-video text-white"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-lg truncate">${f.name}</h4>
+                                <p class="text-gray-400 text-sm">${formatFileSize(f.size)}</p>
+                            </div>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-medium mb-2">Title</label>
+                                <input type="text" placeholder="Video title" class="input-field w-full p-3" name="title_${i}" value="${f.name.split('.')[0]}">
+                            </div>
+                            <div>
+                                <label class="block font-medium mb-2">Privacy</label>
+                                <select class="input-field w-full p-3" name="privacy_${i}">
+                                    <option value="private">Private</option>
+                                    <option value="unlisted" selected>Unlisted</option>
+                                    <option value="public">Public</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block font-medium mb-2">Description</label>
+                            <textarea placeholder="Video description" class="input-field w-full p-3 h-24 resize-none" name="description_${i}"></textarea>
+                        </div>
+                    </div>
+                `).join('');
+
+                const form = document.getElementById('video-details-form');
+                form.onsubmit = (e) => {
+                    e.preventDefault();
+                    startProcessing(data.upload_session_id);
+                };
 
             } catch (error) {
                 closeModal();
-                showStatusModal('error', 'Upload Failed', error.message);
+                showStatusModal('error', 'Upload Error', error.message);
+                console.error('Upload start error:', error);
             }
         }
 
-        function showUploadForm(fileInputs) {
-            closeModal();
-
-            const form = document.getElementById('upload-form');
-            const details = document.getElementById('file-details');
-
-            details.innerHTML = '';
-
-            Object.entries(fileInputs).forEach(([filename, info]) => {
-                const fileDiv = document.createElement('div');
-                fileDiv.className = 'bg-black bg-opacity-20 p-6 rounded-xl';
-                fileDiv.innerHTML = `
-                    <div class="flex items-center mb-4">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                            <i class="fas fa-video text-white"></i>
+        async function startProcessing(uploadSessionId) {
+            try {
+                document.getElementById('upload-form').classList.add('hidden');
+                document.getElementById('upload-progress').classList.remove('hidden');
+                
+                const progressContainer = document.getElementById('progress-container');
+                progressContainer.innerHTML = `
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-300">Total Progress</span>
+                            <span id="process-percentage" class="font-bold text-blue-400">0%</span>
                         </div>
-                        <div>
-                            <h4 class="font-semibold text-lg">${filename}</h4>
-                            <p class="text-gray-400 text-sm">${formatFileSize(info.size || 0)}</p>
+                        <div class="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+                            <div id="process-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
                         </div>
-                    </div>
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block font-medium mb-2">Title</label>
-                            <input type="text" placeholder="Video title" class="input-field w-full p-3" name="title_${filename}">
-                        </div>
-                        <div>
-                            <label class="block font-medium mb-2">Privacy</label>
-                            <select class="input-field w-full p-3" name="privacy_${filename}">
-                                <option value="private">Private</option>
-                                <option value="unlisted">Unlisted</option>
-                                <option value="public">Public</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <label class="block font-medium mb-2">Description</label>
-                        <textarea placeholder="Video description" class="input-field w-full p-3 h-24 resize-none" name="description_${filename}"></textarea>
+                        <p id="process-status" class="text-sm text-gray-500 mt-3 text-center italic">Starting processing...</p>
                     </div>
                 `;
-                details.appendChild(fileDiv);
-            });
 
-            form.classList.remove('hidden');
-
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                processUpload(fileInputs);
-            });
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function cancelUpload() {
-            document.getElementById('upload-form').classList.add('hidden');
-            document.getElementById('upload-progress').classList.add('hidden');
-        }
-
-        async function processUpload(fileInputs) {
-            try {
-                const formData = new FormData(document.getElementById('video-details-form'));
-                const fileDetails = {};
-
-                Object.keys(fileInputs).forEach(filename => {
-                    fileDetails[filename] = {
-                        file_id: fileInputs[filename].file_id,
-                        user_input: {
-                            title: formData.get(`title_${filename}`),
-                            description: formData.get(`description_${filename}`),
-                            privacy: formData.get(`privacy_${filename}`)
-                        }
-                    };
-                });
-
-                showLoadingModal('Processing Upload', 'Encoding and uploading files...');
+                // Fake progress animation while waiting for backend
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    if (progress < 90) {
+                        progress += Math.random() * 5;
+                        updateProgressUI(Math.min(90, progress));
+                    }
+                }, 800);
 
                 const response = await fetch(`${API_BASE}/api/upload/process`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${currentSession}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentSession}`
                     },
-                    body: JSON.stringify({
-                        upload_session_id: 'session_id',
-                        file_details: fileDetails
-                    })
+                    body: JSON.stringify({ upload_session_id: uploadSessionId })
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    closeModal();
-                    showStatusModal('success', 'Upload Complete!', 'Your videos have been uploaded successfully.');
-                    setTimeout(() => {
-                        closeModal();
-                        loadDashboard();
-                    }, 2000);
-                } else {
-                    throw new Error(data.error);
+                clearInterval(progressInterval);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Processing failed');
                 }
 
+                const data = await response.json();
+                updateProgressUI(100, 'Processing complete!');
+
+                setTimeout(() => {
+                    showStatusModal('success', 'Upload Successful', `Successfully processed ${data.results.length} video(s).`);
+                    showSection('dashboard');
+                    loadDashboard();
+                    
+                    // Reset upload section for next time
+                    document.getElementById('upload-progress').classList.add('hidden');
+                    document.getElementById('upload-area').parentElement.classList.remove('hidden');
+                }, 1000);
+
             } catch (error) {
-                closeModal();
-                showStatusModal('error', 'Processing Failed', error.message);
+                document.getElementById('upload-progress').classList.add('hidden');
+                document.getElementById('upload-area').parentElement.classList.remove('hidden');
+                showStatusModal('error', 'Processing Error', error.message);
+                console.error('Processing error:', error);
             }
         }
 
+        function updateProgressUI(percentage, statusText) {
+            const bar = document.getElementById('process-bar');
+            const label = document.getElementById('process-percentage');
+            const status = document.getElementById('process-status');
+            
+            if (bar) bar.style.width = `${percentage}%`;
+            if (label) label.textContent = `${Math.round(percentage)}%`;
+            if (status && statusText) status.textContent = statusText;
+        }
+
         async function startRecovery() {
-            const url = document.getElementById('youtube-url').value;
+            const urlInput = document.getElementById('youtube-url');
+            const url = urlInput.value.trim();
             if (!url) {
-                showStatusModal('warning', 'Missing URL', 'Please enter a YouTube URL to continue.');
+                showStatusModal('warning', 'Missing URL', 'Please enter a valid YouTube URL to continue.');
                 return;
             }
 
             try {
-                showLoadingModal('Analyzing Video', 'Checking YouTube URL...');
+                showLoadingModal('Analyzing Video', 'Connecting to YouTube API...');
 
                 const response = await fetch(`${API_BASE}/api/recover/start`, {
                     method: 'POST',
@@ -1022,92 +1050,102 @@
                         'Authorization': `Bearer ${currentSession}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        youtube_url: url
-                    })
+                    body: JSON.stringify({ youtube_url: url })
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    showRecoveryResults(data.video_info);
-                } else {
-                    throw new Error(data.error);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Analysis failed');
                 }
+
+                const data = await response.json();
+                closeModal();
+
+                const results = document.getElementById('recovery-results');
+                const info = document.getElementById('video-info');
+
+                info.innerHTML = `
+                    <div class="bg-black bg-opacity-30 p-8 rounded-2xl border border-white/10">
+                        <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+                            <div class="w-full md:w-64 aspect-video bg-gradient-to-br from-red-500/20 to-purple-600/20 rounded-xl flex items-center justify-center border border-white/10 flex-shrink-0 shadow-2xl">
+                                <i class="fab fa-youtube text-6xl text-red-500"></i>
+                            </div>
+                            <div class="flex-1 text-center md:text-left">
+                                <h4 class="font-bold text-2xl mb-4 gradient-text">${url.length > 50 ? url.substring(0, 50) + '...' : url}</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Status</p>
+                                        <p class="text-sm font-semibold text-green-400 flex items-center justify-center md:justify-start">
+                                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                                            ${data.status}
+                                        </p>
+                                    </div>
+                                    <div class="bg-white/5 p-4 rounded-xl border border-white/5">
+                                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">ID</p>
+                                        <p class="text-sm font-semibold truncate">${data.recovery_id.substring(0, 8)}...</p>
+                                    </div>
+                                </div>
+                                <p class="text-gray-400 text-sm mt-6 italic">Video identified. Recovery will restore original file fragments from the YouTube stream.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                results.classList.remove('hidden');
+                results.classList.add('slide-in');
+                urlInput.value = ''; // Clear input
 
             } catch (error) {
                 closeModal();
                 showStatusModal('error', 'Analysis Failed', error.message);
+                console.error('Recovery start error:', error);
             }
         }
 
-        function showRecoveryResults(videoInfo) {
-            closeModal();
-
-            const results = document.getElementById('recovery-results');
-            const info = document.getElementById('video-info');
-
-            info.innerHTML = `
-                <div class="bg-black bg-opacity-20 p-6 rounded-xl">
-                    <div class="flex items-start space-x-4">
-                        <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <i class="fab fa-youtube text-2xl text-white"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-xl mb-2">${videoInfo.title}</h4>
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <span class="text-gray-400">Duration:</span>
-                                    <span class="font-medium">${videoInfo.duration}</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-400">Size:</span>
-                                    <span class="font-medium">${videoInfo.size}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            results.classList.remove('hidden');
-        }
-
         async function confirmRecovery(confirmed) {
+            const results = document.getElementById('recovery-results');
+            if (!confirmed) {
+                results.classList.add('hidden');
+                return;
+            }
+
             try {
-                showLoadingModal('Processing Recovery', confirmed ? 'Downloading and decoding video...' : 'Cancelling...');
+                showLoadingModal('Processing Recovery', 'Downloading and decoding video...');
 
                 const response = await fetch(`${API_BASE}/api/recover/confirm`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${currentSession}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentSession}`
                     },
-                    body: JSON.stringify({
-                        recovery_session_id: 'session_id',
-                        confirmed: confirmed
+                    body: JSON.stringify({ 
+                        recovery_session_id: document.getElementById('video-info').querySelector('p.truncate').textContent.split('...')[0], 
+                        confirmed: true 
                     })
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    if (confirmed) {
-                        showStatusModal('success', 'Recovery Complete!', 'Video recovered successfully.');
-                        setTimeout(() => {
-                            closeModal();
-                            loadDashboard();
-                        }, 2000);
-                    } else {
-                        closeModal();
-                    }
-                } else {
-                    throw new Error(data.error);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Recovery failed');
                 }
+
+                const data = await response.json();
+                closeModal();
+                results.classList.add('hidden');
+                
+                if (data.status === 'completed') {
+                    showStatusModal('success', 'Recovery Complete', `Successfully recovered ${data.recovered_files.length} file(s).`);
+                } else {
+                    showStatusModal('info', 'Recovery Started', 'The process is running in the background.');
+                }
+                
+                showSection('dashboard');
+                loadDashboard();
 
             } catch (error) {
                 closeModal();
                 showStatusModal('error', 'Recovery Failed', error.message);
+                console.error('Recovery confirm error:', error);
             }
         }
 
