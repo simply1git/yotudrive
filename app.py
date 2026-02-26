@@ -9,7 +9,6 @@ import time
 import uuid
 import secrets
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
 import requests
 from werkzeug.utils import secure_filename
 
@@ -18,8 +17,13 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
 
-# Enable CORS for frontend
-CORS(app)
+# Manual CORS headers
+@app.after_request
+def add_cors_headers(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    return response
 
 # Active sessions storage (in production, use Redis/database)
 active_sessions = {}
