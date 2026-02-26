@@ -706,16 +706,28 @@
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
+            // Check if we are in the middle of an auth callback
+            const urlParams = new URLSearchParams(window.location.search);
+            const authCode = urlParams.get('code');
+            
+            if (authCode) {
+                // If we have an auth code, we MUST skip normal initialization 
+                // and handle the login immediately to prevent code expiration/reuse
+                console.log('[DEBUG] Auth code detected, prioritizing login flow');
+                initializeApp(true); 
+            } else {
+                initializeApp(false);
+            }
+            
             setupFileUpload();
             setupEventListeners();
             checkBackendHealth();
         });
 
-        function initializeApp() {
+        function initializeApp(isAuthFlow = false) {
             // Check for existing session
             const savedSession = localStorage.getItem('yotudrive_session');
-            if (savedSession) {
+            if (savedSession && !isAuthFlow) {
                 currentSession = savedSession;
                 updateUIForLoggedIn();
                 connectWebSocket();
@@ -725,12 +737,24 @@
             // Check for auth code in URL
             const urlParams = new URLSearchParams(window.location.search);
             const authCode = urlParams.get('code');
+            const error = urlParams.get('error');
+
+            if (error) {
+                console.error('[ERROR] Google Auth Error:', error);
+                showStatusModal('error', 'Authentication Failed', `Google returned an error: ${error}`);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
             if (authCode) {
                 console.log('[DEBUG] Auth code found in URL:', authCode);
-                // Clear URL parameters
+                // Clear URL parameters immediately to prevent reuse on refresh
                 window.history.replaceState({}, document.title, window.location.pathname);
-                // Use decodeURIComponent just in case it's encoded, but browser usually handles this
-                completeGoogleLogin(decodeURIComponent(authCode));
+                
+                // Use a small delay to ensure UI is ready
+                setTimeout(() => {
+                    completeGoogleLogin(decodeURIComponent(authCode));
+                }, 100);
             }
         }
 
