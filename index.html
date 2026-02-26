@@ -720,18 +720,21 @@
                 connectWebSocket();
                 loadDashboard();
             }
+
+            // Check for auth code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const authCode = urlParams.get('code');
+            if (authCode) {
+                console.log('[DEBUG] Auth code found in URL:', authCode);
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+                // Use decodeURIComponent just in case it's encoded, but browser usually handles this
+                completeGoogleLogin(decodeURIComponent(authCode));
+            }
         }
 
         function setupEventListeners() {
             // Handle OAuth callback
-            const urlParams = new URLSearchParams(window.location.search);
-            const authCode = urlParams.get('code');
-
-            if (authCode) {
-                // Clear URL parameters
-                window.history.replaceState({}, document.title, window.location.pathname);
-                completeGoogleLogin(authCode);
-            }
         }
 
         function showSection(sectionName) {
