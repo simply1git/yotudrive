@@ -104,14 +104,58 @@
         .floating {
             animation: float 4s ease-in-out infinite;
         }
-        .loading-spinner {
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-left-color: #667eea;
-            animation: spin 1s linear infinite;
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #6366f1;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            border-radius: 14px;
+            font-weight: 600;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
@@ -549,6 +593,15 @@
         let currentSession = null;
         let socket = null;
         const API_BASE = 'https://yotudrive.onrender.com';
+        const VERCEL_URL = 'https://yotudrive.vercel.app';
+
+        // Fix for OAuth redirect: use the current origin if on Vercel
+        const getRedirectUri = () => {
+            if (window.location.hostname.includes('vercel.app')) {
+                return `${window.location.origin}/auth/callback`;
+            }
+            return 'https://yotudrive.vercel.app/auth/callback';
+        };
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
@@ -583,9 +636,10 @@
         function showSection(sectionName) {
             // Hide all sections
             document.querySelectorAll('.section').forEach(section => {
-                section.classList.add('hidden');
+                section.classList.remove('active');
+                section.style.display = 'none';
             });
-            document.getElementById('landing-section').classList.add('hidden');
+            document.getElementById('landing-section').style.display = 'none';
 
             // Remove active class from nav buttons
             document.querySelectorAll('.nav-link').forEach(btn => {
@@ -594,11 +648,14 @@
 
             // Show selected section
             const section = document.getElementById(sectionName + '-section');
-            section.classList.remove('hidden');
-            section.classList.add('slide-in');
+            if (section) {
+                section.style.display = 'block';
+                setTimeout(() => section.classList.add('active'), 10);
+            }
 
             // Add active class to nav button
-            document.getElementById(sectionName + '-btn').classList.add('active');
+            const navBtn = document.getElementById(sectionName + '-btn');
+            if (navBtn) navBtn.classList.add('active');
         }
 
         function scrollToFeatures() {
@@ -650,8 +707,8 @@
 
                 // Google OAuth configuration
                 const clientId = '933593371934-i02bjdmk309b3a9b71qt4n3kop3edb60.apps.googleusercontent.com';
-                const redirectUri = 'https://yotudrive.vercel.app/auth/callback';
-                const scope = 'openid email profile';
+                const redirectUri = getRedirectUri();
+                const scope = 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/youtube.upload';
                 const responseType = 'code';
 
                 // Build Google OAuth URL
