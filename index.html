@@ -595,10 +595,15 @@
 
         // Comprehensive fetch wrapper to handle errors and logging
         async function apiFetch(endpoint, options = {}) {
+            // Ensure absolute URL if it doesn't start with http
             const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+            
             const defaultOptions = {
+                mode: 'cors', // Force CORS mode
+                credentials: 'omit', // Don't send cookies for now to avoid additional CORS issues
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     ...(currentSession ? { 'Authorization': `Bearer ${currentSession}` } : {})
                 }
             };
