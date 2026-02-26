@@ -85,11 +85,11 @@ class FileMetadata:
     """File metadata for database storage"""
     id: str
     user_id: str
-    google_file_id: Optional[str] = None
-    youtube_video_id: Optional[str] = None
     original_name: str
     file_size: int
     mime_type: str
+    google_file_id: Optional[str] = None
+    youtube_video_id: Optional[str] = None
     created_at: float = None
     modified_at: float = None
     encoding_status: str = "pending"  # pending, processing, completed, failed
