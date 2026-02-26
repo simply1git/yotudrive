@@ -17,33 +17,37 @@ try:
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
     from google.auth.transport.requests import Request
-    from flask_cors import CORS
 except ImportError:
-    # Fallback for environments where namespace packages are tricky
+    # Google packages missing, try emergency install
     import sys
     import subprocess
-    # Try to re-install if missing (last resort on Render)
     try:
         print("[DEBUG] Attempting emergency package install...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "google-api-python-client", "google-auth", "google-auth-oauthlib", "google-auth-httplib2", "google-api-core", "googleapis-common-protos", "flask-cors"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "google-api-python-client", "google-auth", "google-auth-oauthlib", "google-auth-httplib2", "google-api-core", "googleapis-common-protos"])
         import google.oauth2.credentials
         import google_auth_oauthlib.flow
         from googleapiclient.discovery import build
         from googleapiclient.errors import HttpError
         from google.auth.transport.requests import Request
-        from flask_cors import CORS
         print("[DEBUG] Emergency install successful")
     except Exception as e:
         print(f"[ERROR] Emergency install failed: {e}")
-        print(f"[DEBUG] Initial import failed. Python path: {sys.path}")
-        # Try to force namespace refresh if possible, though usually not needed if installed correctly
-        try:
-            import google
-            import google.oauth2
-            import google.oauth2.credentials
-        except ImportError as ie:
-            print(f"[ERROR] Critical import failure: {ie}")
-            raise
+        raise
+
+try:
+    from flask_cors import CORS
+except ImportError:
+    # flask-cors missing, try emergency install
+    import sys
+    import subprocess
+    try:
+        print("[DEBUG] Attempting emergency install of flask-cors...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "flask-cors"])
+        from flask_cors import CORS
+        print("[DEBUG] Emergency install of flask-cors successful")
+    except Exception as e:
+        print(f"[ERROR] Emergency install of flask-cors failed: {e}")
+        raise
 
 import logging
 
