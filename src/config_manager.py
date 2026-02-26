@@ -243,6 +243,38 @@ class ConfigManager:
         self.performance.pipeline_chunk_size = int(os.getenv('YOTUDRIVE_PIPELINE_CHUNK_SIZE', self.performance.pipeline_chunk_size))
         self.performance.enable_parallel = os.getenv('YOTUDRIVE_ENABLE_PARALLEL', 'true').lower() == 'true'
     
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get a configuration value using a dot-separated key (e.g., 'google.client_id')."""
+        try:
+            # First check if the key is in environment variables (mapped to YOTUDRIVE_*)
+            env_key = f"YOTUDRIVE_{key.upper().replace('.', '_')}"
+            env_val = os.getenv(env_key)
+            if env_val is not None:
+                return env_val
+
+            # Special handling for google namespace since it might not be a dataclass yet
+            if key.startswith('google.'):
+                attr_name = key.split('.')[1]
+                # Fallback to direct env lookups for common Google keys
+                if attr_name == 'client_id':
+                    return os.getenv('GOOGLE_CLIENT_ID', default)
+                if attr_name == 'client_secret':
+                    return os.getenv('GOOGLE_CLIENT_SECRET', default)
+                if attr_name == 'redirect_uri':
+                    return os.getenv('GOOGLE_REDIRECT_URI', default)
+
+            # Standard attribute traversal
+            parts = key.split('.')
+            obj = self
+            for part in parts:
+                if hasattr(obj, part):
+                    obj = getattr(obj, part)
+                else:
+                    return default
+            return obj
+        except Exception:
+            return default
+
     def get_effective_config(self) -> Dict[str, Any]:
         """Get effective configuration as dictionary."""
         return {
