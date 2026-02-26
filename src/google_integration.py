@@ -11,11 +11,39 @@ import requests
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from pathlib import Path
-import google.oauth2.credentials
-import google_auth_oauthlib.flow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from google.auth.transport.requests import Request
+    try:
+        import google.oauth2.credentials
+        import google_auth_oauthlib.flow
+        from googleapiclient.discovery import build
+        from googleapiclient.errors import HttpError
+        from google.auth.transport.requests import Request
+    except ImportError:
+        # Fallback for environments where namespace packages are tricky
+        import sys
+        import subprocess
+        # Try to re-install if missing (last resort on Render)
+        try:
+            print("[DEBUG] Attempting emergency package install...")
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "google-api-python-client", "google-auth", "google-auth-oauthlib", "google-auth-httplib2", "google-api-core", "googleapis-common-protos"])
+            import google.oauth2.credentials
+            import google_auth_oauthlib.flow
+            from googleapiclient.discovery import build
+            from googleapiclient.errors import HttpError
+            from google.auth.transport.requests import Request
+            print("[DEBUG] Emergency install successful")
+        except Exception as e:
+            print(f"[ERROR] Emergency install failed: {e}")
+            import sys
+            print(f"[DEBUG] Initial import failed. Python path: {sys.path}")
+            # Try to force namespace refresh if possible, though usually not needed if installed correctly
+            try:
+                import google
+                import google.oauth2
+                import google.oauth2.credentials
+            except ImportError as ie:
+                print(f"[ERROR] Critical import failure: {ie}")
+                raise
+
 import logging
 
 from src.config_manager import config_manager
