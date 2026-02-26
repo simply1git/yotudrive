@@ -865,6 +865,9 @@
             try {
                 showLoadingModal('Authenticating', 'Verifying your account...');
 
+                // Log the code being sent (partial for security)
+                console.log(`[DEBUG] Sending auth code to backend: ${authCode.substring(0, 10)}...`);
+
                 const data = await apiFetch('/api/auth/google', {
                     method: 'POST',
                     body: JSON.stringify({
