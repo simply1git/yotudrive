@@ -646,7 +646,7 @@
         async function checkBackendHealth() {
             const statusIndicator = document.createElement('div');
             statusIndicator.id = 'api-status-indicator';
-            statusIndicator.className = 'fixed bottom-4 right-4 flex items-center space-x-2 bg-black/50 backdrop-blur-md p-2 px-3 rounded-full text-xs border border-white/10 z-[100]';
+            statusIndicator.className = 'fixed bottom-4 right-4 flex items-center space-x-2 bg-black/50 backdrop-blur-md p-2 px-3 rounded-full text-xs border border-white/10 z-[100] transition-opacity duration-500';
             statusIndicator.innerHTML = `
                 <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
                 <span class="text-gray-300">API: Connecting...</span>
@@ -656,11 +656,12 @@
             try {
                 // Try health check with a timeout
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s for Render cold start
                 
                 const response = await fetch(`${API_BASE}/health`, { 
                     signal: controller.signal,
-                    mode: 'cors'
+                    mode: 'cors',
+                    cache: 'no-cache'
                 });
                 clearTimeout(timeoutId);
 
@@ -677,15 +678,28 @@
                 }
             } catch (error) {
                 console.error('[ERROR] Backend health check failed:', error);
+                let errorMessage = 'API: Offline (Error)';
+                if (error.name === 'AbortError') {
+                    errorMessage = 'API: Connection Timeout (Still starting?)';
+                }
+                
                 statusIndicator.innerHTML = `
                     <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span class="text-gray-300">API: Offline (Error)</span>
+                    <span class="text-gray-300">${errorMessage}</span>
                 `;
-                // Show more detailed error info in console for the user
+                
                 console.warn('%c[YotuDrive] API Connection failed. Possible reasons:', 'color: orange; font-weight: bold;');
-                console.warn('1. Backend might be sleeping (Render Free Tier spins down after inactivity)');
-                console.warn('2. SSL/HTTPS handshake issue');
-                console.warn('3. CORS policy blocking (though backend is configured to allow all)');
+                console.warn('1. Backend might be sleeping (Render Free Tier spins down after 15 mins of inactivity). It can take up to 60 seconds to wake up.');
+                console.warn('2. SSL/HTTPS handshake issue.');
+                console.warn('3. CORS policy blocking.');
+                
+                // Retry after 5 seconds if it was a timeout
+                if (error.name === 'AbortError' || error.message.includes('fetch')) {
+                    setTimeout(() => {
+                        document.body.removeChild(statusIndicator);
+                        checkBackendHealth();
+                    }, 5000);
+                }
             }
         }
 
