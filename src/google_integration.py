@@ -17,6 +17,7 @@ try:
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
     from google.auth.transport.requests import Request
+    from flask_cors import CORS
 except ImportError:
     # Fallback for environments where namespace packages are tricky
     import sys
@@ -24,16 +25,16 @@ except ImportError:
     # Try to re-install if missing (last resort on Render)
     try:
         print("[DEBUG] Attempting emergency package install...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "google-api-python-client", "google-auth", "google-auth-oauthlib", "google-auth-httplib2", "google-api-core", "googleapis-common-protos"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "google-api-python-client", "google-auth", "google-auth-oauthlib", "google-auth-httplib2", "google-api-core", "googleapis-common-protos", "flask-cors"])
         import google.oauth2.credentials
         import google_auth_oauthlib.flow
         from googleapiclient.discovery import build
         from googleapiclient.errors import HttpError
         from google.auth.transport.requests import Request
+        from flask_cors import CORS
         print("[DEBUG] Emergency install successful")
     except Exception as e:
         print(f"[ERROR] Emergency install failed: {e}")
-        import sys
         print(f"[DEBUG] Initial import failed. Python path: {sys.path}")
         # Try to force namespace refresh if possible, though usually not needed if installed correctly
         try:
