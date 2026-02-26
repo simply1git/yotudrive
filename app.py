@@ -17,8 +17,11 @@ from src.db import FileDatabase
 from src.enhanced_recovery import EnhancedRecoveryManager
 from src.google_integration import YouTubeManager, GoogleDriveManager
 
+from flask_cors import CORS
+
 # Initialize Flask app
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
 
