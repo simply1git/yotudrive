@@ -7,54 +7,66 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
             min-height: 100vh;
+            color: #e2e8f0;
         }
         .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         .gradient-text {
-            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         .btn-primary {
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            font-weight: 500;
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
         }
         .btn-secondary {
-            background: linear-gradient(45deg, #2196F3, #1976D2);
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            font-weight: 500;
         }
         .btn-secondary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 12px 24px rgba(245, 87, 108, 0.3);
         }
         .feature-card {
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 16px;
         }
         .feature-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         }
         .upload-area {
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 16px;
         }
         .upload-area:hover {
-            border-color: rgba(76, 175, 80, 0.8);
-            background: rgba(76, 175, 80, 0.1);
+            border-color: rgba(102, 126, 234, 0.6);
+            background: rgba(102, 126, 234, 0.05);
         }
         .progress-bar {
-            transition: width 0.3s ease;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .modal {
             display: none;
@@ -64,6 +76,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
             z-index: 1000;
         }
         .modal.show {
@@ -71,208 +84,432 @@
             align-items: center;
             justify-content: center;
         }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 8px 16px;
+        }
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .loading-spinner {
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body class="text-white">
+<body class="fade-in">
     <!-- Navigation -->
-    <nav class="glass-card p-4 mb-8">
+    <nav class="glass-card p-6 mb-8 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <i class="fab fa-youtube text-3xl text-red-500"></i>
-                <h1 class="text-2xl font-bold">YotuDrive 2.0</h1>
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                    <i class="fab fa-youtube text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold">YotuDrive</h1>
+                    <span class="text-sm text-gray-400">2.0</span>
+                </div>
             </div>
             <div class="flex items-center space-x-6">
-                <button id="dashboard-btn" class="hover:text-gray-300" onclick="showSection('dashboard')">Dashboard</button>
-                <button id="upload-btn" class="hover:text-gray-300" onclick="showSection('upload')">Upload</button>
-                <button id="recover-btn" class="hover:text-gray-300" onclick="showSection('recover')">Recover</button>
-                <button id="search-btn" class="hover:text-gray-300" onclick="showSection('search')">Search</button>
-                <button id="settings-btn" class="hover:text-gray-300" onclick="showSection('settings')">Settings</button>
-                <button id="login-btn" class="btn-primary px-4 py-2 rounded-lg" onclick="showLoginModal()">Login</button>
-                <span id="user-info" class="hidden">Welcome, <span id="user-name"></span></span>
+                <button id="dashboard-btn" class="nav-link hidden" onclick="showSection('dashboard')">
+                    <i class="fas fa-home mr-2"></i>Dashboard
+                </button>
+                <button id="upload-btn" class="nav-link hidden" onclick="showSection('upload')">
+                    <i class="fas fa-cloud-upload-alt mr-2"></i>Upload
+                </button>
+                <button id="recover-btn" class="nav-link hidden" onclick="showSection('recover')">
+                    <i class="fas fa-recycle mr-2"></i>Recover
+                </button>
+                <button id="search-btn" class="nav-link hidden" onclick="showSection('search')">
+                    <i class="fas fa-search mr-2"></i>Search
+                </button>
+                <button id="settings-btn" class="nav-link hidden" onclick="showSection('settings')">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </button>
+                <button id="login-btn" class="btn-primary px-6 py-3" onclick="showLoginModal()">
+                    <i class="fab fa-google mr-2"></i>Sign In
+                </button>
+                <div id="user-profile" class="hidden flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white text-sm"></i>
+                    </div>
+                    <span id="user-name" class="font-medium"></span>
+                    <button onclick="logout()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-6 pb-12">
+
+        <!-- Landing Section -->
+        <div id="landing-section" class="text-center mb-16">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-6xl font-bold mb-6 leading-tight">
+                    <span class="gradient-text">Advanced YouTube</span><br>
+                    <span class="text-white">Video Platform</span>
+                </h1>
+                <p class="text-xl text-gray-300 mb-8 leading-relaxed">
+                    Upload, manage, and recover your YouTube videos with AI-powered features,
+                    end-to-end encryption, and seamless integration.
+                </p>
+                <div class="flex justify-center space-x-4 mb-12">
+                    <button onclick="showLoginModal()" class="btn-primary px-8 py-4 text-lg">
+                        <i class="fab fa-google mr-2"></i>Get Started Free
+                    </button>
+                    <button onclick="scrollToFeatures()" class="btn-secondary px-8 py-4 text-lg">
+                        <i class="fas fa-play mr-2"></i>Learn More
+                    </button>
+                </div>
+
+                <!-- Feature Highlights -->
+                <div class="grid md:grid-cols-3 gap-8 mt-16">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-brain text-2xl text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">AI-Powered</h3>
+                        <p class="text-gray-400">Smart content analysis and search</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-shield-alt text-2xl text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">Secure</h3>
+                        <p class="text-gray-400">End-to-end encryption & privacy</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-rocket text-2xl text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">Fast</h3>
+                        <p class="text-gray-400">Lightning-fast processing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div id="features-section" class="mb-20">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4">Powerful Features</h2>
+                <p class="text-gray-400 text-lg">Everything you need for professional video management</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="glass-card p-6 feature-card">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-upload text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Smart Upload</h3>
+                    <p class="text-gray-400 leading-relaxed">Upload videos with automatic AI analysis, metadata extraction, and secure encoding.</p>
+                </div>
+                <div class="glass-card p-6 feature-card">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-search text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">AI Search</h3>
+                    <p class="text-gray-400 leading-relaxed">Find videos instantly with intelligent search powered by machine learning.</p>
+                </div>
+                <div class="glass-card p-6 feature-card">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-recycle text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Video Recovery</h3>
+                    <p class="text-gray-400 leading-relaxed">Recover videos from YouTube URLs with advanced download and decoding.</p>
+                </div>
+                <div class="glass-card p-6 feature-card">
+                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-lock text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">Privacy First</h3>
+                    <p class="text-gray-400 leading-relaxed">End-to-end encryption, anonymous mode, and GDPR compliance.</p>
+                </div>
+            </div>
+        </div>
 
         <!-- Dashboard Section -->
-        <div id="dashboard-section" class="section">
-            <div class="text-center mb-12">
-                <h1 class="text-5xl font-bold mb-4">
-                    <span class="gradient-text">Advanced YouTube Video Platform</span>
-                </h1>
-                <p class="text-xl mb-8 text-gray-200">
-                    Upload, manage, and recover your YouTube videos with AI-powered features and end-to-end encryption
-                </p>
+        <div id="dashboard-section" class="section hidden">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">Welcome back!</h2>
+                <p class="text-gray-400">Here's an overview of your YotuDrive activity</p>
             </div>
 
             <!-- Stats Cards -->
             <div class="grid md:grid-cols-4 gap-6 mb-12">
-                <div class="glass-card p-6 rounded-xl feature-card text-center">
-                    <i class="fas fa-upload text-3xl text-green-400 mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2" id="upload-count">0</h3>
-                    <p class="text-gray-300">Files Uploaded</p>
+                <div class="glass-card p-6 text-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-upload text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-1" id="upload-count">0</h3>
+                    <p class="text-gray-400 text-sm">Files Uploaded</p>
                 </div>
-                <div class="glass-card p-6 rounded-xl feature-card text-center">
-                    <i class="fas fa-download text-3xl text-blue-400 mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2" id="recover-count">0</h3>
-                    <p class="text-gray-300">Files Recovered</p>
+                <div class="glass-card p-6 text-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-download text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-1" id="recover-count">0</h3>
+                    <p class="text-gray-400 text-sm">Files Recovered</p>
                 </div>
-                <div class="glass-card p-6 rounded-xl feature-card text-center">
-                    <i class="fas fa-shield-alt text-3xl text-purple-400 mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2" id="security-status">Enabled</h3>
-                    <p class="text-gray-300">Security Status</p>
+                <div class="glass-card p-6 text-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-1" id="security-status">Active</h3>
+                    <p class="text-gray-400 text-sm">Security Status</p>
                 </div>
-                <div class="glass-card p-6 rounded-xl feature-card text-center">
-                    <i class="fas fa-brain text-3xl text-red-400 mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2" id="ai-status">Active</h3>
-                    <p class="text-gray-300">AI Features</p>
+                <div class="glass-card p-6 text-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-brain text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-1" id="ai-status">Ready</h3>
+                    <p class="text-gray-400 text-sm">AI Features</p>
                 </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="glass-card p-8 rounded-xl">
-                    <h3 class="text-2xl font-bold mb-4">Quick Upload</h3>
-                    <p class="text-gray-300 mb-6">Upload files with AI analysis and encryption</p>
-                    <button class="btn-primary px-6 py-3 rounded-lg text-white font-semibold" onclick="showSection('upload')">
-                        <i class="fas fa-cloud-upload-alt mr-2"></i>Start Upload
-                    </button>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="glass-card p-8 feature-card cursor-pointer" onclick="showSection('upload')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-cloud-upload-alt text-white text-xl"></i>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Upload Videos</h3>
+                    <p class="text-gray-400 leading-relaxed">Start uploading your videos with AI-powered analysis and secure encoding.</p>
                 </div>
-                <div class="glass-card p-8 rounded-xl">
-                    <h3 class="text-2xl font-bold mb-4">Video Recovery</h3>
-                    <p class="text-gray-300 mb-6">Recover videos from YouTube URLs</p>
-                    <button class="btn-secondary px-6 py-3 rounded-lg text-white font-semibold" onclick="showSection('recover')">
-                        <i class="fas fa-recycle mr-2"></i>Start Recovery
-                    </button>
+                <div class="glass-card p-8 feature-card cursor-pointer" onclick="showSection('recover')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-recycle text-white text-xl"></i>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Recover Videos</h3>
+                    <p class="text-gray-400 leading-relaxed">Download and recover videos from YouTube URLs with advanced processing.</p>
                 </div>
             </div>
         </div>
 
         <!-- Upload Section -->
         <div id="upload-section" class="section hidden">
-            <h2 class="text-3xl font-bold mb-8">File Upload</h2>
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">Upload Videos</h2>
+                <p class="text-gray-400">Upload your videos with AI analysis and secure encoding</p>
+            </div>
 
             <!-- Upload Area -->
-            <div class="glass-card p-8 rounded-xl mb-8">
-                <div id="upload-area" class="upload-area p-12 rounded-lg text-center cursor-pointer">
-                    <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2">Drop files here or click to browse</h3>
-                    <p class="text-gray-300">Supports video files, documents, and archives up to 100MB</p>
-                    <input type="file" id="file-input" multiple class="hidden" accept="video/*,audio/*,image/*,.pdf,.doc,.docx,.txt,.zip">
+            <div class="glass-card p-12 mb-8">
+                <div id="upload-area" class="upload-area p-16 text-center cursor-pointer">
+                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Drop your videos here</h3>
+                    <p class="text-gray-400 mb-4">or click to browse files</p>
+                    <p class="text-sm text-gray-500">Supports MP4, MOV, AVI, and more • Up to 100MB per file</p>
+                    <input type="file" id="file-input" multiple accept="video/*,audio/*" class="hidden">
                 </div>
             </div>
 
             <!-- Upload Progress -->
-            <div id="upload-progress" class="glass-card p-6 rounded-xl hidden">
-                <h3 class="text-xl font-bold mb-4">Upload Progress</h3>
+            <div id="upload-progress" class="glass-card p-6 hidden">
+                <h3 class="text-xl font-bold mb-6">Processing Files</h3>
                 <div id="progress-container"></div>
             </div>
 
             <!-- Upload Form -->
-            <div id="upload-form" class="glass-card p-8 rounded-xl hidden">
+            <div id="upload-form" class="glass-card p-8 hidden">
                 <h3 class="text-xl font-bold mb-6">Video Details</h3>
                 <form id="video-details-form">
-                    <div id="file-details"></div>
-                    <button type="submit" class="btn-primary px-6 py-3 rounded-lg text-white font-semibold mt-6">
-                        <i class="fas fa-rocket mr-2"></i>Start Processing
-                    </button>
+                    <div class="grid md:grid-cols-2 gap-6" id="file-details"></div>
+                    <div class="flex justify-end mt-8 space-x-4">
+                        <button type="button" onclick="cancelUpload()" class="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn-primary px-8 py-3">
+                            <i class="fas fa-rocket mr-2"></i>Start Processing
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
 
         <!-- Recovery Section -->
         <div id="recover-section" class="section hidden">
-            <h2 class="text-3xl font-bold mb-8">Video Recovery</h2>
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">Video Recovery</h2>
+                <p class="text-gray-400">Recover videos from YouTube URLs</p>
+            </div>
 
-            <div class="glass-card p-8 rounded-xl">
+            <div class="glass-card p-8 mb-8">
                 <div class="mb-6">
-                    <label class="block text-lg font-bold mb-2">YouTube URL</label>
-                    <input type="url" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full p-4 rounded-lg bg-black bg-opacity-50 border border-gray-600 focus:border-blue-500 outline-none">
+                    <label class="block text-lg font-semibold mb-3">YouTube URL</label>
+                    <div class="relative">
+                        <input type="url" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..."
+                               class="input-field w-full p-4 pl-12 text-white">
+                        <i class="fab fa-youtube absolute left-4 top-1/2 transform -translate-y-1/2 text-red-500"></i>
+                    </div>
                 </div>
-                <button onclick="startRecovery()" class="btn-secondary px-6 py-3 rounded-lg text-white font-semibold">
-                    <i class="fas fa-search mr-2"></i>Identify Video
+                <button onclick="startRecovery()" class="btn-secondary px-8 py-4 text-lg">
+                    <i class="fas fa-search mr-2"></i>Analyze Video
                 </button>
             </div>
 
             <!-- Recovery Results -->
-            <div id="recovery-results" class="glass-card p-8 rounded-xl mt-8 hidden">
-                <h3 class="text-xl font-bold mb-4">Video Information</h3>
-                <div id="video-info"></div>
-                <div class="flex space-x-4 mt-6">
-                    <button onclick="confirmRecovery(true)" class="btn-primary px-6 py-3 rounded-lg text-white font-semibold">
-                        <i class="fas fa-download mr-2"></i>Start Recovery
+            <div id="recovery-results" class="glass-card p-8 hidden">
+                <h3 class="text-xl font-bold mb-6">Video Information</h3>
+                <div id="video-info" class="mb-6"></div>
+                <div class="flex justify-end space-x-4">
+                    <button onclick="confirmRecovery(false)" class="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
+                        Cancel
                     </button>
-                    <button onclick="confirmRecovery(false)" class="bg-gray-600 px-6 py-3 rounded-lg text-white font-semibold hover:bg-gray-700">
-                        <i class="fas fa-times mr-2"></i>Cancel
+                    <button onclick="confirmRecovery(true)" class="btn-primary px-8 py-3">
+                        <i class="fas fa-download mr-2"></i>Start Recovery
                     </button>
                 </div>
             </div>
 
             <!-- Recovery Progress -->
-            <div id="recovery-progress" class="glass-card p-6 rounded-xl mt-8 hidden">
-                <h3 class="text-xl font-bold mb-4">Recovery Progress</h3>
-                <div id="recovery-status"></div>
+            <div id="recovery-progress" class="glass-card p-6 hidden">
+                <h3 class="text-xl font-bold mb-6">Recovery Progress</h3>
+                <div id="recovery-status" class="space-y-4"></div>
             </div>
         </div>
 
         <!-- Search Section -->
         <div id="search-section" class="section hidden">
-            <h2 class="text-3xl font-bold mb-8">AI-Powered Search</h2>
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">AI-Powered Search</h2>
+                <p class="text-gray-400">Find your videos instantly with intelligent search</p>
+            </div>
 
-            <div class="glass-card p-8 rounded-xl">
+            <div class="glass-card p-8 mb-8">
                 <div class="mb-6">
-                    <label class="block text-lg font-bold mb-2">Search Query</label>
-                    <input type="text" id="search-query" placeholder="Search by content, filename, or description..." class="w-full p-4 rounded-lg bg-black bg-opacity-50 border border-gray-600 focus:border-blue-500 outline-none">
+                    <label class="block text-lg font-semibold mb-3">Search Query</label>
+                    <div class="relative">
+                        <input type="text" id="search-query" placeholder="Search by content, filename, or description..."
+                               class="input-field w-full p-4 pl-12 text-white">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
                 </div>
-                <button onclick="performSearch()" class="btn-secondary px-6 py-3 rounded-lg text-white font-semibold">
-                    <i class="fas fa-search mr-2"></i>Search Files
+                <button onclick="performSearch()" class="btn-primary px-8 py-4 text-lg">
+                    <i class="fas fa-search mr-2"></i>Search Videos
                 </button>
             </div>
 
             <!-- Search Results -->
-            <div id="search-results" class="glass-card p-8 rounded-xl mt-8 hidden">
-                <h3 class="text-xl font-bold mb-4">Search Results</h3>
-                <div id="results-list"></div>
+            <div id="search-results" class="glass-card p-8 hidden">
+                <h3 class="text-xl font-bold mb-6">Search Results</h3>
+                <div id="results-list" class="space-y-4"></div>
             </div>
         </div>
 
         <!-- Settings Section -->
         <div id="settings-section" class="section hidden">
-            <h2 class="text-3xl font-bold mb-8">Privacy & Security Settings</h2>
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold mb-2">Settings</h2>
+                <p class="text-gray-400">Manage your privacy and security preferences</p>
+            </div>
 
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="glass-card p-8 rounded-xl">
-                    <h3 class="text-xl font-bold mb-6">Privacy Settings</h3>
-                    <div class="space-y-4">
-                        <label class="flex items-center">
-                            <input type="checkbox" id="encryption-enabled" class="mr-3">
-                            <span>Enable End-to-End Encryption</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" id="ai-analysis-enabled" class="mr-3">
-                            <span>Enable AI Content Analysis</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" id="anonymous-mode" class="mr-3">
-                            <span>Anonymous Mode</span>
-                        </label>
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="glass-card p-8">
+                    <h3 class="text-xl font-bold mb-6 flex items-center">
+                        <i class="fas fa-shield-alt mr-3 text-purple-400"></i>
+                        Privacy Settings
+                    </h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="font-medium">End-to-End Encryption</label>
+                                <p class="text-sm text-gray-400">Encrypt files before upload</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="encryption-enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="font-medium">AI Content Analysis</label>
+                                <p class="text-sm text-gray-400">Enable AI-powered analysis</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="ai-analysis-enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="font-medium">Anonymous Mode</label>
+                                <p class="text-sm text-gray-400">Hide personal information</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="anonymous-mode" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-2">YouTube Privacy</label>
+                            <select id="youtube-privacy" class="input-field w-full p-3">
+                                <option value="private">Private</option>
+                                <option value="unlisted">Unlisted</option>
+                                <option value="public">Public</option>
+                            </select>
+                        </div>
                     </div>
-                    <select id="youtube-privacy" class="w-full p-3 rounded-lg bg-black bg-opacity-50 border border-gray-600 mt-4">
-                        <option value="private">Private</option>
-                        <option value="unlisted">Unlisted</option>
-                        <option value="public">Public</option>
-                    </select>
-                    <button onclick="savePrivacySettings()" class="btn-primary px-6 py-3 rounded-lg text-white font-semibold mt-6 w-full">
+                    <button onclick="savePrivacySettings()" class="btn-primary w-full mt-8 py-3">
                         <i class="fas fa-save mr-2"></i>Save Settings
                     </button>
                 </div>
 
-                <div class="glass-card p-8 rounded-xl">
-                    <h3 class="text-xl font-bold mb-6">Analytics</h3>
-                    <div id="analytics-data">
-                        <p class="text-gray-300">Login to view analytics</p>
+                <div class="glass-card p-8">
+                    <h3 class="text-xl font-bold mb-6 flex items-center">
+                        <i class="fas fa-chart-line mr-3 text-green-400"></i>
+                        Analytics
+                    </h3>
+                    <div id="analytics-data" class="text-center py-8">
+                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-chart-bar text-2xl text-white"></i>
+                        </div>
+                        <p class="text-gray-400">Analytics will appear here after login</p>
                     </div>
                 </div>
             </div>
@@ -281,27 +518,44 @@
 
     <!-- Login Modal -->
     <div id="login-modal" class="modal">
-        <div class="glass-card p-8 rounded-xl max-w-md w-full mx-4">
-            <h3 class="text-2xl font-bold mb-6 text-center">Login with Google</h3>
-            <p class="text-gray-300 mb-6 text-center">
-                Connect your Google account to access all YotuDrive 2.0 features
-            </p>
-            <button onclick="loginWithGoogle()" class="btn-primary px-6 py-3 rounded-lg text-white font-semibold w-full">
-                <i class="fab fa-google mr-2"></i>Continue with Google
+        <div class="glass-card p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fab fa-youtube text-3xl text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-2">Welcome to YotuDrive</h3>
+                <p class="text-gray-400">Sign in to access your account</p>
+            </div>
+            <button onclick="initiateGoogleLogin()" class="btn-primary w-full py-4 text-lg mb-4">
+                <i class="fab fa-google mr-3"></i>Continue with Google
             </button>
-            <button onclick="closeModal()" class="mt-4 text-gray-400 hover:text-white w-full">Cancel</button>
+            <button onclick="closeModal()" class="w-full text-gray-400 hover:text-white py-2 transition-colors">
+                Maybe Later
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loading-modal" class="modal">
+        <div class="glass-card p-8 max-w-sm w-full mx-4 text-center">
+            <div class="loading-spinner w-12 h-12 mx-auto mb-4"></div>
+            <h3 class="text-xl font-bold mb-2" id="loading-title">Loading...</h3>
+            <p class="text-gray-400" id="loading-message">Please wait</p>
         </div>
     </div>
 
     <!-- Status Modal -->
     <div id="status-modal" class="modal">
-        <div class="glass-card p-8 rounded-xl max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold mb-4" id="status-title">Processing...</h3>
-            <p class="text-gray-300" id="status-message">Please wait...</p>
-            <div class="mt-6">
-                <div class="bg-black bg-opacity-50 rounded-full h-2">
-                    <div id="status-progress" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        <div class="glass-card p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4" id="status-icon">
+                    <i class="fas fa-check text-2xl text-white"></i>
                 </div>
+                <h3 class="text-xl font-bold mb-2" id="status-title">Success!</h3>
+                <p class="text-gray-400 mb-6" id="status-message">Operation completed successfully</p>
+                <button onclick="closeModal()" class="btn-primary px-8 py-3">
+                    Continue
+                </button>
             </div>
         </div>
     </div>
@@ -316,6 +570,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
             setupFileUpload();
+            setupEventListeners();
         });
 
         function initializeApp() {
@@ -329,22 +584,41 @@
             }
         }
 
+        function setupEventListeners() {
+            // Handle OAuth callback
+            const urlParams = new URLSearchParams(window.location.search);
+            const authCode = urlParams.get('code');
+
+            if (authCode) {
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+                completeGoogleLogin(authCode);
+            }
+        }
+
         function showSection(sectionName) {
             // Hide all sections
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.add('hidden');
             });
+            document.getElementById('landing-section').classList.add('hidden');
 
             // Remove active class from nav buttons
-            document.querySelectorAll('nav button').forEach(btn => {
-                btn.classList.remove('text-blue-400');
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                btn.classList.remove('active');
             });
 
             // Show selected section
-            document.getElementById(sectionName + '-section').classList.remove('hidden');
+            const section = document.getElementById(sectionName + '-section');
+            section.classList.remove('hidden');
+            section.classList.add('slide-in');
 
             // Add active class to nav button
-            document.getElementById(sectionName + '-btn').classList.add('text-blue-400');
+            document.getElementById(sectionName + '-btn').classList.add('active');
+        }
+
+        function scrollToFeatures() {
+            document.getElementById('features-section').scrollIntoView({ behavior: 'smooth' });
         }
 
         function showLoginModal() {
@@ -357,26 +631,56 @@
             });
         }
 
-        async function loginWithGoogle() {
-            try {
-                // This would normally redirect to Google's OAuth URL
-                // For demo purposes, we'll simulate the login
-                showStatusModal('Connecting to Google...', 'Please complete authentication...');
+        function showLoadingModal(title, message) {
+            document.getElementById('loading-title').textContent = title;
+            document.getElementById('loading-message').textContent = message;
+            document.getElementById('loading-modal').classList.add('show');
+        }
 
-                // Simulate OAuth flow
-                setTimeout(async () => {
-                    const authCode = 'demo_auth_code_' + Date.now();
-                    await completeLogin(authCode);
-                }, 2000);
+        function showStatusModal(type, title, message) {
+            const iconMap = {
+                success: 'fa-check',
+                error: 'fa-exclamation-triangle',
+                warning: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+
+            const colorMap = {
+                success: 'from-green-500 to-green-600',
+                error: 'from-red-500 to-red-600',
+                warning: 'from-yellow-500 to-yellow-600',
+                info: 'from-blue-500 to-blue-600'
+            };
+
+            document.getElementById('status-icon').className = `w-16 h-16 bg-gradient-to-br ${colorMap[type]} rounded-2xl flex items-center justify-center mx-auto mb-4`;
+            document.getElementById('status-icon').innerHTML = `<i class="fas ${iconMap[type]} text-2xl text-white"></i>`;
+            document.getElementById('status-title').textContent = title;
+            document.getElementById('status-message').textContent = message;
+            document.getElementById('status-modal').classList.add('show');
+        }
+
+        async function initiateGoogleLogin() {
+            try {
+                closeModal();
+                showLoadingModal('Connecting to Google', 'Redirecting to Google...');
+
+                // In a real implementation, this would redirect to Google's OAuth URL
+                // For demo purposes, we'll simulate the OAuth flow
+                setTimeout(() => {
+                    // Simulate successful OAuth callback
+                    const mockAuthCode = 'demo_auth_code_' + Date.now();
+                    completeGoogleLogin(mockAuthCode);
+                }, 1500);
 
             } catch (error) {
-                alert('Login failed: ' + error.message);
+                closeModal();
+                showStatusModal('error', 'Login Failed', error.message);
             }
         }
 
-        async function completeLogin(authCode) {
+        async function completeGoogleLogin(authCode) {
             try {
-                showStatusModal('Authenticating...', 'Verifying your account...');
+                showLoadingModal('Authenticating', 'Verifying your account...');
 
                 const response = await fetch(`${API_BASE}/api/auth/google`, {
                     method: 'POST',
@@ -399,25 +703,68 @@
                     loadDashboard();
 
                     closeModal();
-                    showStatusModal('Success!', 'Welcome to YotuDrive 2.0!');
-                    setTimeout(closeModal, 2000);
+                    showStatusModal('success', 'Welcome to YotuDrive!', 'You are now logged in and ready to use all features.');
+
+                    // Redirect to dashboard after a moment
+                    setTimeout(() => {
+                        closeModal();
+                        showSection('dashboard');
+                    }, 2000);
+
                 } else {
-                    throw new Error(data.error);
+                    throw new Error(data.error || 'Authentication failed');
                 }
 
             } catch (error) {
-                alert('Authentication failed: ' + error.message);
                 closeModal();
+                showStatusModal('error', 'Authentication Failed', error.message);
             }
         }
 
         function updateUIForLoggedIn(user = null) {
+            document.getElementById('login-modal').classList.remove('show');
+            document.getElementById('landing-section').classList.add('hidden');
+
+            // Show navigation and user profile
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                btn.classList.remove('hidden');
+            });
             document.getElementById('login-btn').classList.add('hidden');
-            document.getElementById('user-info').classList.remove('hidden');
+            document.getElementById('user-profile').classList.remove('hidden');
 
             if (user) {
-                document.getElementById('user-name').textContent = user.display_name || user.username;
+                document.getElementById('user-name').textContent = user.display_name || user.username || 'User';
             }
+
+            // Show dashboard by default
+            showSection('dashboard');
+        }
+
+        function logout() {
+            currentSession = null;
+            localStorage.removeItem('yotudrive_session');
+
+            // Reset UI
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                btn.classList.add('hidden');
+            });
+            document.getElementById('login-btn').classList.remove('hidden');
+            document.getElementById('user-profile').classList.add('hidden');
+
+            // Hide sections and show landing
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById('landing-section').classList.remove('hidden');
+
+            // Disconnect socket
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+
+            showStatusModal('success', 'Logged Out', 'You have been successfully logged out.');
+            setTimeout(closeModal, 1500);
         }
 
         function connectWebSocket() {
@@ -425,7 +772,9 @@
 
             socket.on('connect', function() {
                 console.log('Connected to WebSocket');
-                socket.emit('join_session', {session_id: currentSession});
+                if (currentSession) {
+                    socket.emit('join_session', {session_id: currentSession});
+                }
             });
 
             socket.on('upload_progress', function(data) {
@@ -473,13 +822,15 @@
 
         function handleDragOver(e) {
             e.preventDefault();
-            e.currentTarget.classList.add('border-green-500');
+            e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.6)';
+            e.currentTarget.style.background = 'rgba(102, 126, 234, 0.05)';
         }
 
         function handleFileDrop(e) {
             e.preventDefault();
             const files = e.dataTransfer.files;
             handleFiles(files);
+            resetUploadArea(e.currentTarget);
         }
 
         function handleFileSelect(e) {
@@ -487,9 +838,13 @@
             handleFiles(files);
         }
 
+        function resetUploadArea(area) {
+            area.style.borderColor = '';
+            area.style.background = '';
+        }
+
         function handleFiles(files) {
             if (!currentSession) {
-                alert('Please login first');
                 showLoginModal();
                 return;
             }
@@ -500,7 +855,7 @@
 
         async function startUploadSession(files) {
             try {
-                showStatusModal('Starting Upload...', 'Initializing upload session...');
+                showLoadingModal('Starting Upload', 'Initializing upload session...');
 
                 const response = await fetch(`${API_BASE}/api/upload/start`, {
                     method: 'POST',
@@ -523,8 +878,8 @@
                 }
 
             } catch (error) {
-                alert('Upload failed: ' + error.message);
                 closeModal();
+                showStatusModal('error', 'Upload Failed', error.message);
             }
         }
 
@@ -538,16 +893,35 @@
 
             Object.entries(fileInputs).forEach(([filename, info]) => {
                 const fileDiv = document.createElement('div');
-                fileDiv.className = 'bg-black bg-opacity-30 p-4 rounded-lg mb-4';
+                fileDiv.className = 'bg-black bg-opacity-20 p-6 rounded-xl';
                 fileDiv.innerHTML = `
-                    <h4 class="font-bold mb-2">${filename}</h4>
-                    <input type="text" placeholder="Title" class="w-full p-2 mb-2 rounded bg-gray-800 border border-gray-600" name="title_${filename}">
-                    <textarea placeholder="Description" class="w-full p-2 mb-2 rounded bg-gray-800 border border-gray-600" name="description_${filename}"></textarea>
-                    <select class="w-full p-2 rounded bg-gray-800 border border-gray-600" name="privacy_${filename}">
-                        <option value="private">Private</option>
-                        <option value="unlisted">Unlisted</option>
-                        <option value="public">Public</option>
-                    </select>
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-video text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">${filename}</h4>
+                            <p class="text-gray-400 text-sm">${formatFileSize(info.size || 0)}</p>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-medium mb-2">Title</label>
+                            <input type="text" placeholder="Video title" class="input-field w-full p-3" name="title_${filename}">
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-2">Privacy</label>
+                            <select class="input-field w-full p-3" name="privacy_${filename}">
+                                <option value="private">Private</option>
+                                <option value="unlisted">Unlisted</option>
+                                <option value="public">Public</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block font-medium mb-2">Description</label>
+                        <textarea placeholder="Video description" class="input-field w-full p-3 h-24 resize-none" name="description_${filename}"></textarea>
+                    </div>
                 `;
                 details.appendChild(fileDiv);
             });
@@ -558,6 +932,19 @@
                 e.preventDefault();
                 processUpload(fileInputs);
             });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function cancelUpload() {
+            document.getElementById('upload-form').classList.add('hidden');
+            document.getElementById('upload-progress').classList.add('hidden');
         }
 
         async function processUpload(fileInputs) {
@@ -576,7 +963,7 @@
                     };
                 });
 
-                showStatusModal('Processing Upload...', 'Encoding and uploading files...');
+                showLoadingModal('Processing Upload', 'Encoding and uploading files...');
 
                 const response = await fetch(`${API_BASE}/api/upload/process`, {
                     method: 'POST',
@@ -585,7 +972,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        upload_session_id: 'session_id', // This would come from start response
+                        upload_session_id: 'session_id',
                         file_details: fileDetails
                     })
                 });
@@ -593,7 +980,8 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showStatusModal('Success!', 'Files uploaded successfully!');
+                    closeModal();
+                    showStatusModal('success', 'Upload Complete!', 'Your videos have been uploaded successfully.');
                     setTimeout(() => {
                         closeModal();
                         loadDashboard();
@@ -603,20 +991,20 @@
                 }
 
             } catch (error) {
-                alert('Processing failed: ' + error.message);
                 closeModal();
+                showStatusModal('error', 'Processing Failed', error.message);
             }
         }
 
         async function startRecovery() {
             const url = document.getElementById('youtube-url').value;
             if (!url) {
-                alert('Please enter a YouTube URL');
+                showStatusModal('warning', 'Missing URL', 'Please enter a YouTube URL to continue.');
                 return;
             }
 
             try {
-                showStatusModal('Identifying Video...', 'Analyzing YouTube URL...');
+                showLoadingModal('Analyzing Video', 'Checking YouTube URL...');
 
                 const response = await fetch(`${API_BASE}/api/recover/start`, {
                     method: 'POST',
@@ -638,8 +1026,8 @@
                 }
 
             } catch (error) {
-                alert('Recovery failed: ' + error.message);
                 closeModal();
+                showStatusModal('error', 'Analysis Failed', error.message);
             }
         }
 
@@ -650,10 +1038,25 @@
             const info = document.getElementById('video-info');
 
             info.innerHTML = `
-                <div class="bg-black bg-opacity-30 p-4 rounded-lg">
-                    <h4 class="font-bold mb-2">${videoInfo.title}</h4>
-                    <p class="text-gray-300 mb-2">Duration: ${videoInfo.duration}</p>
-                    <p class="text-gray-300">Size: ${videoInfo.size}</p>
+                <div class="bg-black bg-opacity-20 p-6 rounded-xl">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i class="fab fa-youtube text-2xl text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-xl mb-2">${videoInfo.title}</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-400">Duration:</span>
+                                    <span class="font-medium">${videoInfo.duration}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Size:</span>
+                                    <span class="font-medium">${videoInfo.size}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -662,7 +1065,7 @@
 
         async function confirmRecovery(confirmed) {
             try {
-                showStatusModal('Processing Recovery...', confirmed ? 'Downloading and decoding video...' : 'Cancelling...');
+                showLoadingModal('Processing Recovery', confirmed ? 'Downloading and decoding video...' : 'Cancelling...');
 
                 const response = await fetch(`${API_BASE}/api/recover/confirm`, {
                     method: 'POST',
@@ -671,7 +1074,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        recovery_session_id: 'session_id', // Would come from start response
+                        recovery_session_id: 'session_id',
                         confirmed: confirmed
                     })
                 });
@@ -680,7 +1083,7 @@
 
                 if (response.ok) {
                     if (confirmed) {
-                        showStatusModal('Success!', 'Video recovered successfully!');
+                        showStatusModal('success', 'Recovery Complete!', 'Video recovered successfully.');
                         setTimeout(() => {
                             closeModal();
                             loadDashboard();
@@ -693,19 +1096,21 @@
                 }
 
             } catch (error) {
-                alert('Recovery failed: ' + error.message);
                 closeModal();
+                showStatusModal('error', 'Recovery Failed', error.message);
             }
         }
 
         async function performSearch() {
             const query = document.getElementById('search-query').value;
             if (!query) {
-                alert('Please enter a search query');
+                showStatusModal('warning', 'Empty Query', 'Please enter a search term.');
                 return;
             }
 
             try {
+                showLoadingModal('Searching', 'Finding your videos...');
+
                 const response = await fetch(`${API_BASE}/api/search`, {
                     method: 'POST',
                     headers: {
@@ -726,26 +1131,41 @@
                 }
 
             } catch (error) {
-                alert('Search failed: ' + error.message);
+                closeModal();
+                showStatusModal('error', 'Search Failed', error.message);
             }
         }
 
         function showSearchResults(results) {
+            closeModal();
+
             const resultsDiv = document.getElementById('search-results');
             const resultsList = document.getElementById('results-list');
 
             resultsList.innerHTML = '';
 
             if (results.length === 0) {
-                resultsList.innerHTML = '<p class="text-gray-300">No results found</p>';
+                resultsList.innerHTML = '<div class="text-center py-8"><div class="w-16 h-16 bg-gradient-to-br from-gray-500 to-gray-600 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="fas fa-search text-2xl text-white"></i></div><p class="text-gray-400">No videos found matching your search.</p></div>';
             } else {
                 results.forEach(result => {
                     const resultDiv = document.createElement('div');
-                    resultDiv.className = 'bg-black bg-opacity-30 p-4 rounded-lg mb-4';
+                    resultDiv.className = 'bg-black bg-opacity-20 p-6 rounded-xl hover:bg-opacity-30 transition-all cursor-pointer';
                     resultDiv.innerHTML = `
-                        <h4 class="font-bold mb-2">${result.filename}</h4>
-                        <p class="text-gray-300 mb-2">${result.description || 'No description'}</p>
-                        <p class="text-sm text-gray-400">Relevance: ${result.relevance_score || 'N/A'}</p>
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-lg mb-2">${result.filename}</h4>
+                                <p class="text-gray-400 mb-3">${result.description || 'No description available'}</p>
+                                <div class="flex items-center space-x-4 text-sm">
+                                    <span class="text-blue-400">
+                                        <i class="fas fa-brain mr-1"></i>
+                                        Relevance: ${result.relevance_score || 'N/A'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-video text-white"></i>
+                            </div>
+                        </div>
                     `;
                     resultsList.appendChild(resultDiv);
                 });
@@ -756,6 +1176,8 @@
 
         async function savePrivacySettings() {
             try {
+                showLoadingModal('Saving Settings', 'Updating your preferences...');
+
                 const settings = {
                     encryption_enabled: document.getElementById('encryption-enabled').checked,
                     ai_analysis_enabled: document.getElementById('ai-analysis-enabled').checked,
@@ -773,35 +1195,36 @@
                 });
 
                 if (response.ok) {
-                    alert('Privacy settings saved successfully!');
+                    closeModal();
+                    showStatusModal('success', 'Settings Saved', 'Your privacy settings have been updated successfully.');
+                    setTimeout(closeModal, 2000);
                 } else {
                     throw new Error('Failed to save settings');
                 }
 
             } catch (error) {
-                alert('Failed to save settings: ' + error.message);
+                closeModal();
+                showStatusModal('error', 'Save Failed', error.message);
             }
         }
 
         function updateUploadProgress(data) {
-            // Update progress UI
             console.log('Upload progress:', data);
+            // Update progress UI as needed
         }
 
         function updateRecoveryProgress(data) {
-            // Update recovery UI
             console.log('Recovery progress:', data);
+            // Update recovery UI as needed
         }
 
-        function showStatusModal(title, message, progress = 50) {
-            document.getElementById('status-title').textContent = title;
-            document.getElementById('status-message').textContent = message;
-            document.getElementById('status-progress').style.width = progress + '%';
-            document.getElementById('status-modal').classList.add('show');
-        }
-
-        // Show dashboard by default
-        showSection('dashboard');
+        // Initialize with landing page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show landing section by default for new users
+            if (!currentSession) {
+                document.getElementById('landing-section').classList.remove('hidden');
+            }
+        });
     </script>
 </body>
 </html>
