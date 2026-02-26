@@ -3,6 +3,8 @@ Flask==2.3.3
 requests==2.31.0
 gunicorn==21.2.0
 python-socketio==5.9.0
+google-api-python-client==2.97.0
+google-auth==2.22.0
 google-auth-oauthlib==1.1.0
 google-auth-httplib2==0.1.1
 cryptography==41.0.3
@@ -12,7 +14,5 @@ imageio-ffmpeg==0.4.8
 yt-dlp==2023.7.6
 tqdm==4.66.1
 reedsolo==1.7.0
-google-api-python-client==2.97.0
-google-auth==2.22.0
 psycopg2-binary==2.9.7
 redis==5.0.0
