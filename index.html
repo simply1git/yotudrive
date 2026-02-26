@@ -145,7 +145,6 @@
             color: #818cf8;
         }
     </style>
-    </style>
 </head>
 <body class="fade-in">
     <!-- Navigation -->
@@ -588,8 +587,55 @@
             if (window.location.hostname.includes('vercel.app')) {
                 return `${window.location.origin}/auth/callback`;
             }
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return `http://localhost:5000/auth/callback`;
+            }
             return 'https://yotudrive.vercel.app/auth/callback';
         };
+
+        // Comprehensive fetch wrapper to handle errors and logging
+        async function apiFetch(endpoint, options = {}) {
+            const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(currentSession ? { 'Authorization': `Bearer ${currentSession}` } : {})
+                }
+            };
+            
+            const mergedOptions = {
+                ...defaultOptions,
+                ...options,
+                headers: {
+                    ...defaultOptions.headers,
+                    ...(options.headers || {})
+                }
+            };
+
+            console.log(`[DEBUG] Fetching ${url}`, mergedOptions);
+            
+            try {
+                const response = await fetch(url, mergedOptions);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[ERROR] API Error (${response.status}):`, errorText);
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(errorText);
+                    } catch (e) {
+                        errorData = { error: errorText || 'Unknown error' };
+                    }
+                    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`[ERROR] Fetch failed for ${url}:`, error);
+                if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                    throw new Error('Could not connect to the server. Please ensure the backend is running and CORS is allowed.');
+                }
+                throw error;
+            }
+        }
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
@@ -749,22 +795,13 @@
             try {
                 showLoadingModal('Authenticating', 'Verifying your account...');
 
-                const response = await fetch(`${API_BASE}/api/auth/google`, {
+                const data = await apiFetch('/api/auth/google', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({
                         authorization_code: authCode
                     })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Authentication failed');
-                }
-
-                const data = await response.json();
                 currentSession = data.session_id;
                 localStorage.setItem('yotudrive_session', currentSession);
                 localStorage.setItem('yotudrive_user', JSON.stringify(data.user));
@@ -872,16 +909,8 @@
 
         async function loadDashboard() {
             try {
-                const response = await fetch(`${API_BASE}/api/analytics`, {
-                    headers: {
-                        'Authorization': `Bearer ${currentSession}`
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    updateDashboardStats(data);
-                }
+                const data = await apiFetch('/api/analytics');
+                updateDashboardStats(data);
             } catch (error) {
                 console.error('Failed to load dashboard:', error);
             }
@@ -967,21 +996,11 @@
 
             try {
                 showLoadingModal('Initializing', 'Creating upload session...');
-                const response = await fetch(`${API_BASE}/api/upload/start`, {
+                const data = await apiFetch('/api/upload/start', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentSession}`
-                    },
                     body: JSON.stringify({ files: simplifiedFiles })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to start upload');
-                }
-
-                const data = await response.json();
                 closeModal();
                 
                 // Show details form
@@ -1062,23 +1081,12 @@
                     }
                 }, 800);
 
-                const response = await fetch(`${API_BASE}/api/upload/process`, {
+                const data = await apiFetch('/api/upload/process', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentSession}`
-                    },
                     body: JSON.stringify({ upload_session_id: uploadSessionId })
                 });
 
                 clearInterval(progressInterval);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Processing failed');
-                }
-
-                const data = await response.json();
                 updateProgressUI(100, 'Processing complete!');
 
                 setTimeout(() => {
@@ -1120,21 +1128,11 @@
             try {
                 showLoadingModal('Analyzing Video', 'Connecting to YouTube API...');
 
-                const response = await fetch(`${API_BASE}/api/recover/start`, {
+                const data = await apiFetch('/api/recover/start', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${currentSession}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({ youtube_url: url })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Analysis failed');
-                }
-
-                const data = await response.json();
                 closeModal();
 
                 const results = document.getElementById('recovery-results');
@@ -1188,24 +1186,14 @@
             try {
                 showLoadingModal('Processing Recovery', 'Downloading and decoding video...');
 
-                const response = await fetch(`${API_BASE}/api/recover/confirm`, {
+                const data = await apiFetch('/api/recover/confirm', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${currentSession}`
-                    },
                     body: JSON.stringify({ 
                         recovery_session_id: document.getElementById('video-info').querySelector('p.truncate').textContent.split('...')[0], 
                         confirmed: true 
                     })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Recovery failed');
-                }
-
-                const data = await response.json();
                 closeModal();
                 results.classList.add('hidden');
                 
@@ -1235,24 +1223,14 @@
             try {
                 showLoadingModal('Searching', 'Finding your videos...');
 
-                const response = await fetch(`${API_BASE}/api/search`, {
+                const data = await apiFetch('/api/search', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${currentSession}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({
                         query: query
                     })
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    showSearchResults(data.results);
-                } else {
-                    throw new Error(data.error);
-                }
+                showSearchResults(data.results);
 
             } catch (error) {
                 closeModal();
@@ -1309,22 +1287,14 @@
                     youtube_privacy: document.getElementById('youtube-privacy').value
                 };
 
-                const response = await fetch(`${API_BASE}/api/privacy/settings`, {
+                await apiFetch('/api/privacy/settings', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${currentSession}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify(settings)
                 });
 
-                if (response.ok) {
-                    closeModal();
-                    showStatusModal('success', 'Settings Saved', 'Your privacy settings have been updated successfully.');
-                    setTimeout(closeModal, 2000);
-                } else {
-                    throw new Error('Failed to save settings');
-                }
+                closeModal();
+                showStatusModal('success', 'Settings Saved', 'Your privacy settings have been updated successfully.');
+                setTimeout(closeModal, 2000);
 
             } catch (error) {
                 closeModal();
