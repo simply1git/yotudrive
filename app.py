@@ -97,11 +97,6 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/health')
 def health_check():
     return jsonify({'status': 'healthy', 'version': '2.1.0'})
 
