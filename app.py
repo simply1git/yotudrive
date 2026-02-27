@@ -14,9 +14,31 @@ from functools import wraps
 from src.db import FileDatabase
 from src.enhanced_recovery import EnhancedRecoveryManager
 
+from flask_socketio import SocketIO, emit, join_room, leave_room
+
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 bcrypt = Bcrypt(app)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# ... existing code ...
+
+@socketio.on('connect')
+def handle_connect(auth):
+    token = auth.get('token') if auth else None
+    if not token:
+        return False
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        user_id = data['user_id']
+        join_room(user_id)
+        print(f"[DEBUG] User {user_id} connected to WebSocket")
+    except:
+        return False
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print("[DEBUG] Client disconnected")
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_urlsafe(32))
@@ -327,4 +349,4 @@ def get_files(user_id):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    socketio.run(app, host='0.0.0.0', port=port)
