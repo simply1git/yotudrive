@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <style>
         :root {
             --primary: #6366f1;
@@ -421,6 +422,37 @@
         // Global variables
         let currentUser = null;
         let token = localStorage.getItem('yotu_token');
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId + '-section').classList.add('active');
+            
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('text-white'));
+            const link = document.querySelector(`[data-section="${sectionId}"]`);
+            if (link) link.classList.add('text-white');
+        }
+
+        function showLoadingModal(title, message) {
+            document.getElementById('loading-title').textContent = title;
+            document.getElementById('loading-message').textContent = message;
+            openModal('loading-modal');
+        }
+
+        function showStatusModal(type, title, message) {
+            const icon = document.getElementById('status-icon');
+            icon.className = 'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6';
+            if (type === 'success') {
+                icon.classList.add('bg-green-500/20', 'text-green-400');
+                icon.innerHTML = '<i class="fas fa-check text-3xl"></i>';
+            } else if (type === 'error') {
+                icon.classList.add('bg-red-500/20', 'text-red-400');
+                icon.innerHTML = '<i class="fas fa-times text-3xl"></i>';
+            }
+            document.getElementById('status-title').textContent = title;
+            document.getElementById('status-message').textContent = message;
+            openModal('status-modal');
+        }
 
         function openModal(id) {
             document.getElementById(id).classList.add('active');
