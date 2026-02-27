@@ -126,7 +126,7 @@ def login():
     users = load_users()
     user_data = users.get(email)
 
-    if not user_data or not bcrypt.check_password_hash(user_data['password_hash'], password):
+    if not user_data or 'password_hash' not in user_data or not bcrypt.check_password_hash(user_data['password_hash'], password):
         return jsonify({'error': 'Invalid credentials'}), 401
 
     token = jwt.encode({
@@ -139,7 +139,8 @@ def login():
         'user': {
             'id': user_data['id'],
             'email': email,
-            'name': user_data['name']
+            'name': user_data['name'],
+            'auth_type': 'email'
         }
     })
 
@@ -163,7 +164,9 @@ def google_auth():
 
         token_response = requests.post(token_url, data=token_data)
         if token_response.status_code != 200:
-            return jsonify({'error': 'Token exchange failed'}), 400
+            error_info = token_response.json()
+            print(f"[ERROR] Token exchange failed: {error_info}")
+            return jsonify({'error': f"Token exchange failed: {error_info.get('error_description', 'Unknown error')}"}), 400
 
         token_info = token_response.json()
         access_token = token_info.get('access_token')
@@ -185,10 +188,18 @@ def google_auth():
             user_id = str(uuid.uuid4())
             users[email] = {
                 'id': user_id,
+                'email': email,
                 'name': user_info.get('name'),
                 'google_id': user_info.get('id'),
-                'picture': user_info.get('picture')
+                'picture': user_info.get('picture'),
+                'auth_type': 'google'
             }
+            save_users(users)
+        else:
+            # Update existing user info from Google
+            users[email]['google_id'] = user_info.get('id')
+            users[email]['picture'] = user_info.get('picture')
+            users[email]['auth_type'] = 'google'
             save_users(users)
         
         user_data = users[email]
@@ -203,10 +214,12 @@ def google_auth():
                 'id': user_data['id'],
                 'email': email,
                 'name': user_data['name'],
-                'picture': user_info.get('picture')
+                'picture': user_info.get('picture'),
+                'auth_type': 'google'
             }
         })
     except Exception as e:
+        print(f"[EXCEPTION] Google auth error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # --- Core API Endpoints ---
