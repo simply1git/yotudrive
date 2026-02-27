@@ -680,7 +680,9 @@
 
                 if (processRes.ok) {
                     closeModal('loading-modal');
-                    showStatusModal('success', 'Upload Successful', `Successfully uploaded ${files.length} video(s).`);
+                    const data = await processRes.json();
+                    const downloadLinks = data.results.map(r => `<a href="${r.video_download_url}" target="_blank" download>Download ${r.filename} Video</a>`).join('<br>');
+                    showStatusModal('success', 'Encoding Complete', `Files encoded to videos:<br>${downloadLinks}`);
                     showSection('dashboard');
                     loadDashboardData(); // Refresh the dashboard
                 } else {
@@ -709,7 +711,9 @@
                 const data = await res.json();
                 if (res.ok) {
                     closeModal('loading-modal');
-                    showStatusModal('success', 'Recovery Initialized', `Started recovery for: ${data.video_info.title}`);
+                    const data = await res.json();
+                    const downloadLink = `<a href="${data.file_download_url}" target="_blank" download>Download Recovered File</a>`;
+                    showStatusModal('success', 'Recovery Complete', `File recovered successfully.<br>${downloadLink}`);
                     showSection('dashboard');
                 } else {
                     throw new Error(data.error || 'Recovery failed');
