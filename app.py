@@ -83,6 +83,10 @@ def health_check():
 
 # --- Auth Endpoints ---
 
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '933593371934-i02bjdmk309b3a9b71qt4n3kop3edb60.apps.googleusercontent.com')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'https://yotudrive.vercel.app/auth/callback')
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -135,6 +139,72 @@ def login():
             'name': user_data['name']
         }
     })
+
+@app.route('/api/auth/google', methods=['POST'])
+def google_auth():
+    try:
+        data = request.get_json()
+        authorization_code = data.get('authorization_code')
+        if not authorization_code:
+            return jsonify({'error': 'Authorization code required'}), 400
+
+        # Exchange authorization code for access token
+        token_url = 'https://oauth2.googleapis.com/token'
+        token_data = {
+            'client_id': GOOGLE_CLIENT_ID,
+            'client_secret': GOOGLE_CLIENT_SECRET,
+            'code': authorization_code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': GOOGLE_REDIRECT_URI
+        }
+
+        token_response = requests.post(token_url, data=token_data)
+        if token_response.status_code != 200:
+            return jsonify({'error': 'Token exchange failed'}), 400
+
+        token_info = token_response.json()
+        access_token = token_info.get('access_token')
+
+        # Get user info from Google
+        user_info_url = 'https://www.googleapis.com/oauth2/v2/userinfo'
+        headers = {'Authorization': f'Bearer {access_token}'}
+        user_response = requests.get(user_info_url, headers=headers)
+
+        if user_response.status_code != 200:
+            return jsonify({'error': 'Failed to get user info'}), 400
+
+        user_info = user_response.json()
+        email = user_info.get('email')
+        
+        users = load_users()
+        if email not in users:
+            # Auto-register Google users
+            user_id = str(uuid.uuid4())
+            users[email] = {
+                'id': user_id,
+                'name': user_info.get('name'),
+                'google_id': user_info.get('id'),
+                'picture': user_info.get('picture')
+            }
+            save_users(users)
+        
+        user_data = users[email]
+        token = jwt.encode({
+            'user_id': user_data['id'],
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }, app.config['SECRET_KEY'], algorithm="HS256")
+
+        return jsonify({
+            'token': token,
+            'user': {
+                'id': user_data['id'],
+                'email': email,
+                'name': user_data['name'],
+                'picture': user_info.get('picture')
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # --- Core API Endpoints ---
 

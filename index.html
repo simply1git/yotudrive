@@ -337,18 +337,31 @@
             <button onclick="closeModal('login-modal')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
                 <i class="fas fa-times text-xl"></i>
             </button>
-            <h3 class="text-3xl font-extrabold mb-8 text-center">Welcome <span class="gradient-text">Back</span></h3>
+            <h3 class="text-2xl font-black mb-8">Secure <span class="gradient-text">Access</span></h3>
+            
+            <button onclick="initiateGoogleLogin()" class="btn-primary w-full py-4 font-bold text-sm mb-8 shadow-lg shadow-indigo-500/20">
+                <i class="fab fa-google mr-3"></i>Continue with Google
+            </button>
+            
+            <div class="flex items-center space-x-4 mb-8">
+                <div class="h-[1px] bg-white/5 flex-1"></div>
+                <span class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Or login with Email</span>
+                <div class="h-[1px] bg-white/5 flex-1"></div>
+            </div>
+
             <form onsubmit="handleLogin(event)" class="space-y-6">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-400 mb-2">Email Address</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Email Address</label>
                     <input type="email" id="login-email" required class="input-field w-full px-4 py-3" placeholder="alex@example.com">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-400 mb-2">Password</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Password</label>
                     <input type="password" id="login-password" required class="input-field w-full px-4 py-3" placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn-primary w-full py-4 text-lg shadow-xl">Login to Portal</button>
-                <p class="text-center text-gray-400 text-sm">
+                <button type="submit" class="btn-primary w-full py-4 font-bold text-xs shadow-lg shadow-indigo-500/20">
+                    Login to Portal
+                </button>
+                <p class="text-center text-gray-400 text-xs">
                     Don't have an account? <button type="button" onclick="closeModal('login-modal'); openModal('register-modal')" class="text-indigo-400 font-bold hover:underline">Register</button>
                 </p>
             </form>
@@ -357,21 +370,21 @@
 
     <div id="register-modal" class="modal">
         <div class="glass-card w-full max-w-md p-10 relative">
-            <button onclick="closeModal('register-modal')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
-                <i class="fas fa-times text-xl"></i>
+            <button onclick="closeModal('register-modal')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-all">
+                <i class="fas fa-times"></i>
             </button>
-            <h3 class="text-3xl font-extrabold mb-8 text-center">Join <span class="gradient-text">YotuDrive</span></h3>
+            <h3 class="text-2xl font-black mb-8 text-center">Join <span class="gradient-text">YotuDrive</span></h3>
             <form onsubmit="handleRegister(event)" class="space-y-6">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-400 mb-2">Full Name</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Full Name</label>
                     <input type="text" id="reg-name" required class="input-field w-full px-4 py-3" placeholder="Alex Rivera">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-400 mb-2">Email Address</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Email Address</label>
                     <input type="email" id="reg-email" required class="input-field w-full px-4 py-3" placeholder="alex@example.com">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-400 mb-2">Password</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Password</label>
                     <input type="password" id="reg-password" required class="input-field w-full px-4 py-3" placeholder="••••••••">
                 </div>
                 <button type="submit" class="btn-primary w-full py-4 text-lg shadow-xl">Create Account</button>
@@ -379,6 +392,23 @@
                     Already have an account? <button type="button" onclick="closeModal('register-modal'); openModal('login-modal')" class="text-indigo-400 font-bold hover:underline">Login</button>
                 </p>
             </form>
+        </div>
+    </div>
+
+    <div id="status-modal" class="modal">
+        <div class="glass-card p-10 max-w-sm w-full text-center">
+            <div id="status-icon" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"></div>
+            <h3 id="status-title" class="text-xl font-bold mb-3">Status Title</h3>
+            <p id="status-message" class="text-sm text-gray-500 mb-8 leading-relaxed">Status message details go here.</p>
+            <button onclick="closeModal('status-modal')" class="btn-primary px-10 py-3 font-bold text-sm w-full">OK</button>
+        </div>
+    </div>
+
+    <div id="loading-modal" class="modal">
+        <div class="glass-card p-8 max-w-sm w-full mx-4 text-center">
+            <div class="loading-spinner w-12 h-12 mx-auto mb-4"></div>
+            <h3 class="text-xl font-bold mb-2" id="loading-title">Loading...</h3>
+            <p class="text-gray-400" id="loading-message">Please wait</p>
         </div>
     </div>
 
@@ -400,44 +430,26 @@
             document.getElementById(id).classList.remove('active');
         }
 
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            const section = document.getElementById(id + '-section');
-            if (section) {
-                section.classList.add('active');
-            }
+        function updateUIForLoggedIn() {
+            document.getElementById('logged-out-nav').classList.add('hidden');
+            document.getElementById('logged-in-nav').classList.remove('hidden');
+            document.getElementById('hero-section').classList.remove('active');
             
-            document.querySelectorAll('.nav-link').forEach(l => {
-                if (l.dataset.section === id) l.classList.add('text-white', 'font-bold');
-                else l.classList.remove('text-white', 'font-bold');
-            });
-
-            if (id === 'dashboard') loadDashboardData();
+            const name = currentUser.name || currentUser.email.split('@')[0];
+            document.getElementById('user-name').textContent = name;
+            document.getElementById('dash-user-name').textContent = name;
+            
+            // Set settings info
+            const settingsName = document.getElementById('settings-name');
+            const settingsEmail = document.getElementById('settings-email');
+            if (settingsName) settingsName.textContent = name;
+            if (settingsEmail) settingsEmail.textContent = currentUser.email || '';
         }
 
-        async function handleRegister(e) {
-            e.preventDefault();
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
-            const name = document.getElementById('reg-name').value;
-
-            try {
-                const res = await fetch(`${API_BASE}/api/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, name })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    alert('Registration successful! Please login.');
-                    closeModal('register-modal');
-                    openModal('login-modal');
-                } else {
-                    alert(data.error || 'Registration failed');
-                }
-            } catch (err) {
-                alert('Connection error');
-            }
+        function logout() {
+            localStorage.removeItem('yotu_token');
+            localStorage.removeItem('yotu_user');
+            location.reload();
         }
 
         async function handleLogin(e) {
@@ -468,22 +480,6 @@
             }
         }
 
-        function updateUIForLoggedIn() {
-            document.getElementById('logged-out-nav').classList.add('hidden');
-            document.getElementById('logged-in-nav').classList.remove('hidden');
-            document.getElementById('hero-section').classList.remove('active');
-            
-            const name = currentUser.name || currentUser.email.split('@')[0];
-            document.getElementById('user-name').textContent = name;
-            document.getElementById('dash-user-name').textContent = name;
-        }
-
-        function logout() {
-            localStorage.removeItem('yotu_token');
-            localStorage.removeItem('yotu_user');
-            location.reload();
-        }
-
         async function loadDashboardData() {
             if (!token) return;
             try {
@@ -512,7 +508,7 @@
                                 <td class="px-6 py-4 font-medium">${f.file_name}</td>
                                 <td class="px-6 py-4 text-gray-400">${(f.file_size / (1024*1024)).toFixed(2)} MB</td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 py-1 bg-green-500/10 text-green-400 text-xs rounded-full font-bold">Synced</span>
+                                    <span class="status-badge status-badge-synced">Synced</span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <button class="text-gray-400 hover:text-white"><i class="fas fa-ellipsis-v"></i></button>
@@ -552,6 +548,7 @@
             }
 
             try {
+                showLoadingModal('Uploading', 'Preparing files...');
                 // Prepare files metadata
                 const simplifiedFiles = files.map(f => ({
                     name: f.name,
@@ -585,11 +582,15 @@
                 });
 
                 if (processRes.ok) {
-                    alert('Upload successful!');
+                    closeModal('loading-modal');
+                    showStatusModal('success', 'Upload Successful', `Successfully uploaded ${files.length} video(s).`);
                     showSection('dashboard');
+                } else {
+                    throw new Error('Processing failed');
                 }
             } catch (err) {
-                alert('Upload failed: ' + err.message);
+                closeModal('loading-modal');
+                showStatusModal('error', 'Upload Failed', err.message);
             }
         }
 
@@ -598,6 +599,7 @@
             if (!url) return alert('Please enter a YouTube URL');
             
             try {
+                showLoadingModal('Recovering', 'Initializing recovery engine...');
                 const res = await fetch(`${API_BASE}/api/recover/start`, {
                     method: 'POST',
                     headers: { 
@@ -608,27 +610,145 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alert('Recovery initialized for: ' + data.video_info.title);
+                    closeModal('loading-modal');
+                    showStatusModal('success', 'Recovery Initialized', `Started recovery for: ${data.video_info.title}`);
                     showSection('dashboard');
                 } else {
-                    alert(data.error);
+                    throw new Error(data.error || 'Recovery failed');
                 }
             } catch (err) {
-                alert('Recovery failed');
+                closeModal('loading-modal');
+                showStatusModal('error', 'Recovery Failed', err.message);
             }
         }
 
-        // Init
-        if (token && localStorage.getItem('yotu_user')) {
+        async function handleRegister(e) {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const name = document.getElementById('reg-name').value;
+
             try {
-                currentUser = JSON.parse(localStorage.getItem('yotu_user'));
-                updateUIForLoggedIn();
-                showSection('dashboard');
-            } catch (e) {
-                localStorage.removeItem('yotu_token');
-                localStorage.removeItem('yotu_user');
+                const res = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Registration successful! Please login.');
+                    closeModal('register-modal');
+                    openModal('login-modal');
+                } else {
+                    alert(data.error || 'Registration failed');
+                }
+            } catch (err) {
+                alert('Connection error');
             }
         }
+
+        async function initiateGoogleLogin() {
+            try {
+                closeModal('login-modal');
+                showLoadingModal('Connecting to Google', 'Redirecting to Google...');
+
+                // Google OAuth configuration
+                const clientId = '933593371934-i02bjdmk309b3a9b71qt4n3kop3edb60.apps.googleusercontent.com';
+                const origin = window.location.origin.replace(/\/+$/, '');
+                const redirectUri = `${origin}/auth/callback`;
+                const scope = 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/youtube.upload';
+                const responseType = 'code';
+
+                // Build Google OAuth URL
+                const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${encodeURIComponent(clientId)}&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `scope=${encodeURIComponent(scope)}&` +
+                    `response_type=${responseType}&` +
+                    `access_type=offline&` +
+                    `prompt=consent`;
+
+                // Redirect to Google OAuth
+                window.location.href = googleAuthUrl;
+
+            } catch (error) {
+                closeModal('loading-modal');
+                showStatusModal('error', 'Login Failed', error.message);
+            }
+        }
+
+        async function completeGoogleLogin(authCode) {
+            try {
+                showLoadingModal('Authenticating', 'Verifying your account...');
+
+                console.log(`[DEBUG] Sending auth code to backend: ${authCode.substring(0, 10)}...`);
+
+                const response = await fetch(`${API_BASE}/api/auth/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ authorization_code: authCode })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Authentication failed');
+                }
+
+                const data = await response.json();
+                token = data.token;
+                currentUser = data.user;
+                localStorage.setItem('yotu_token', token);
+                localStorage.setItem('yotu_user', JSON.stringify(currentUser));
+
+                updateUIForLoggedIn();
+                loadDashboardData();
+
+                closeModal('loading-modal');
+                showStatusModal('success', 'Welcome!', `Successfully signed in as ${data.user.name}`);
+
+                setTimeout(() => {
+                    closeModal('status-modal');
+                    showSection('dashboard');
+                }, 2000);
+
+            } catch (error) {
+                closeModal('loading-modal');
+                showStatusModal('error', 'Authentication Failed', error.message);
+                console.error('Login error:', error);
+            }
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for auth code in URL (callback)
+            const urlParams = new URLSearchParams(window.location.search);
+            const authCode = urlParams.get('code');
+            const error = urlParams.get('error');
+
+            if (error) {
+                console.error('[ERROR] Google Auth Error:', error);
+                showStatusModal('error', 'Authentication Failed', `Google returned an error: ${error}`);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (authCode) {
+                console.log('[DEBUG] Auth code found in URL:', authCode);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                setTimeout(() => {
+                    completeGoogleLogin(decodeURIComponent(authCode));
+                }, 100);
+            }
+
+            // Normal Init
+            if (token && localStorage.getItem('yotu_user')) {
+                try {
+                    currentUser = JSON.parse(localStorage.getItem('yotu_user'));
+                    updateUIForLoggedIn();
+                    showSection('dashboard');
+                } catch (e) {
+                    localStorage.removeItem('yotu_token');
+                    localStorage.removeItem('yotu_user');
+                }
+            }
+        });
 
         // Drop Zone
         const dropZone = document.getElementById('drop-zone');
