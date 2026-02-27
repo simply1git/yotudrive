@@ -14,7 +14,7 @@ from functools import wraps
 from src.db import FileDatabase
 from src.enhanced_recovery import EnhancedRecoveryManager
 from src.encoder import Encoder
-from src.ffmpeg_utils import stitch
+from src.ffmpeg_utils import stitch_frames as stitch
 from src.youtube import YouTubeManager
 from src.decoder import Decoder
 
