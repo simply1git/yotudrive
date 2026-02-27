@@ -279,7 +279,8 @@ def process_upload(user_id):
             os.makedirs('temp', exist_ok=True)
             file.save(temp_file)
             
-            frames_dir = tempfile.mkdtemp()
+            frames_dir = os.path.join('temp', str(uuid.uuid4()))
+            os.makedirs(frames_dir, exist_ok=True)
             encoder = Encoder(temp_file, frames_dir)
             encoder.encode()
             
@@ -325,7 +326,8 @@ def start_recovery(user_id):
         if not youtube_url:
             return jsonify({'error': 'YouTube URL required'}), 400
             
-        frames_dir = tempfile.mkdtemp()
+        frames_dir = os.path.join('temp', str(uuid.uuid4()))
+        os.makedirs(frames_dir, exist_ok=True)
         youtube_manager = YouTubeManager()
         if youtube_manager.download(youtube_url, frames_dir):
             output_file = os.path.join('downloads', f'recovered_{uuid.uuid4().hex}.zip')
