@@ -82,6 +82,10 @@ def add_cors_headers(response):
 def health_check():
     return jsonify({'status': 'healthy', 'version': '2.1.0'})
 
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 # --- Auth Endpoints ---
 
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '933593371934-i02bjdmk309b3a9b71qt4n3kop3edb60.apps.googleusercontent.com')

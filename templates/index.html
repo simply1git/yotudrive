@@ -769,9 +769,7 @@
                     `client_id=${encodeURIComponent(clientId)}&` +
                     `redirect_uri=${encodeURIComponent(redirectUri)}&` +
                     `scope=${encodeURIComponent(scope)}&` +
-                    `response_type=${responseType}&` +
-                    `access_type=offline&` +
-                    `prompt=consent`;
+                    `response_type=${responseType}`;
 
                 // Redirect to Google OAuth
                 window.location.href = googleAuthUrl;
