@@ -3,188 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YotuDrive 2.0 - Advanced YouTube Video Platform</title>
+    <title>YotuDrive - Secure Video Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #a855f7;
+            --accent: #f472b6;
+            --bg-dark: #030712;
+            --card-bg: rgba(17, 24, 39, 0.7);
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: #0f0f23;
-            background: radial-gradient(circle at top right, #1a1a3a, #0f0f23);
-            min-height: 100vh;
-            color: #e2e8f0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-dark);
+            color: #f3f4f6;
             overflow-x: hidden;
         }
+
         .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px) saturate(160%);
-            -webkit-backdrop-filter: blur(20px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
+
         .gradient-text {
             background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            font-weight: 800;
         }
+
         .btn-primary {
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 14px;
-            font-weight: 600;
-            letter-spacing: 0.01em;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
         }
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.5);
-            filter: brightness(1.1);
         }
-        .btn-primary:active {
-            transform: translateY(0);
+
+        .nav-blur {
+            backdrop-filter: blur(20px);
+            background: rgba(3, 7, 18, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
+
         .section {
             display: none;
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.5s ease-out;
         }
+
         .section.active {
             display: block;
             opacity: 1;
             transform: translateY(0);
         }
-        .hidden {
-            display: none !important;
-        }
+
         .modal {
             display: none;
             position: fixed;
             inset: 0;
+            z-index: 100;
             background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            z-index: 1000;
+            backdrop-filter: blur(8px);
             align-items: center;
             justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            padding: 1.5rem;
         }
-        .modal.show {
+
+        .modal.active {
             display: flex;
-            opacity: 1;
         }
+
         .input-field {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            outline: none;
-            transition: all 0.2s ease;
             color: white;
-            padding: 0.75rem 1rem;
-            width: 100%;
+            transition: all 0.2s;
         }
+
         .input-field:focus {
-            border-color: #6366f1;
+            border-color: var(--primary);
             background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            outline: none;
         }
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease;
-            border-radius: 14px;
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+
+        .glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            pointer-events: none;
         }
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+
         .loading-spinner {
             width: 40px;
             height: 40px;
             border: 3px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            border-top-color: #6366f1;
+            border-top-color: var(--primary);
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        .upload-area {
-            border: 2px dashed rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .upload-area:hover, .upload-area.dragging {
-            border-color: #6366f1;
-            background: rgba(99, 102, 241, 0.05);
-        }
-        .nav-link {
-            padding: 0.5rem 1rem;
-            border-radius: 10px;
-            transition: all 0.2s ease;
-            color: #94a3b8;
-        }
-        .nav-link:hover, .nav-link.active {
-            color: white;
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .nav-link.active {
-            background: rgba(99, 102, 241, 0.1);
-            color: #818cf8;
-        }
     </style>
 </head>
-<body class="fade-in">
-    <!-- Navigation -->
-    <nav class="glass-card p-6 mb-8 sticky top-0 z-50">
+<body>
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 nav-blur px-6 py-4">
         <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-4">
-                <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                    <i class="fab fa-youtube text-white text-lg"></i>
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="location.reload()">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fab fa-youtube text-white text-xl"></i>
                 </div>
-                <div>
-                    <h1 class="text-2xl font-bold">YotuDrive</h1>
-                    <span class="text-sm text-gray-400">2.0</span>
-                </div>
+                <span class="text-xl font-extrabold tracking-tight">Yotu<span class="gradient-text">Drive</span></span>
             </div>
-            <div class="flex items-center space-x-6">
-                <button id="dashboard-btn" class="nav-link hidden" onclick="showSection('dashboard')">
-                    <i class="fas fa-home mr-2"></i>Dashboard
-                </button>
-                <button id="upload-btn" class="nav-link hidden" onclick="showSection('upload')">
-                    <i class="fas fa-cloud-upload-alt mr-2"></i>Upload
-                </button>
-                <button id="recover-btn" class="nav-link hidden" onclick="showSection('recover')">
-                    <i class="fas fa-recycle mr-2"></i>Recover
-                </button>
-                <button id="search-btn" class="nav-link hidden" onclick="showSection('search')">
-                    <i class="fas fa-search mr-2"></i>Search
-                </button>
-                <button id="settings-btn" class="nav-link hidden" onclick="showSection('settings')">
-                    <i class="fas fa-cog mr-2"></i>Settings
-                </button>
-                <button id="login-btn" class="btn-primary px-6 py-3" onclick="showLoginModal()">
-                    <i class="fab fa-google mr-2"></i>Sign In
-                </button>
-                <div id="user-profile" class="hidden flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-user text-white text-sm"></i>
-                    </div>
-                    <span id="user-name" class="font-medium"></span>
-                    <button onclick="logout()" class="text-gray-400 hover:text-white">
-                        <i class="fas fa-sign-out-alt"></i>
+            
+            <div id="logged-out-nav" class="flex items-center space-x-4">
+                <button onclick="openModal('login-modal')" class="text-gray-300 hover:text-white font-medium transition-colors">Login</button>
+                <button onclick="openModal('register-modal')" class="btn-primary px-6 py-2.5">Get Started</button>
+            </div>
+
+            <div id="logged-in-nav" class="hidden flex items-center space-x-6">
+                <div class="flex items-center space-x-4 mr-6 border-r border-white/10 pr-6">
+                    <button onclick="showSection('dashboard')" class="nav-link text-gray-400 hover:text-white transition-colors" data-section="dashboard">Dashboard</button>
+                    <button onclick="showSection('upload')" class="nav-link text-gray-400 hover:text-white transition-colors" data-section="upload">Upload</button>
+                    <button onclick="showSection('recovery')" class="nav-link text-gray-400 hover:text-white transition-colors" data-section="recovery">Recovery</button>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="user-name" class="text-sm font-semibold"></span>
+                    <button onclick="logout()" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors">
+                        <i class="fas fa-sign-out-alt text-gray-400"></i>
                     </button>
                 </div>
             </div>
@@ -192,1231 +155,445 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-6 pb-12">
-
-        <!-- Landing Section -->
-        <div id="landing-section" class="text-center mb-16">
-            <div class="max-w-4xl mx-auto">
-                <h1 class="text-6xl font-bold mb-6 leading-tight">
-                    <span class="gradient-text">Advanced YouTube</span><br>
-                    <span class="text-white">Video Platform</span>
-                </h1>
-                <p class="text-xl text-gray-300 mb-8 leading-relaxed">
-                    Upload, manage, and recover your YouTube videos with AI-powered features,
-                    end-to-end encryption, and seamless integration.
-                </p>
-                <div class="flex justify-center space-x-4 mb-12">
-                    <button onclick="showLoginModal()" class="btn-primary px-8 py-4 text-lg">
-                        <i class="fab fa-google mr-2"></i>Get Started Free
-                    </button>
-                    <button onclick="scrollToFeatures()" class="btn-secondary px-8 py-4 text-lg">
-                        <i class="fas fa-play mr-2"></i>Learn More
-                    </button>
+    <main class="pt-32 pb-20 px-6 container mx-auto">
+        
+        <!-- Hero Section -->
+        <section id="hero-section" class="section active text-center max-w-4xl mx-auto">
+            <div class="glow top-20 left-1/2 -translate-x-1/2"></div>
+            <h1 class="text-6xl md:text-7xl font-extrabold mb-8 leading-tight">
+                Your YouTube Videos, <br><span class="gradient-text">Fully Portable.</span>
+            </h1>
+            <p class="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">
+                Securely backup, recover, and manage your video content with end-to-end encryption and automated metadata extraction.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                <button onclick="openModal('register-modal')" class="btn-primary px-10 py-4 text-lg w-full sm:w-auto">Start Saving Now</button>
+                <button class="px-10 py-4 text-lg font-bold border border-white/10 rounded-xl hover:bg-white/5 transition-all w-full sm:w-auto">Learn More</button>
+            </div>
+            
+            <div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass-card p-8 text-left group hover:border-indigo-500/50 transition-all">
+                    <div class="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-shield-alt text-indigo-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Military-Grade Security</h3>
+                    <p class="text-gray-400">Your files are encrypted before they even leave your device. Only you have the keys.</p>
                 </div>
-
-                <!-- Feature Highlights -->
-                <div class="grid md:grid-cols-3 gap-8 mt-16">
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-brain text-2xl text-white"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold mb-2">AI-Powered</h3>
-                        <p class="text-gray-400">Smart content analysis and search</p>
+                <div class="glass-card p-8 text-left group hover:border-purple-500/50 transition-all">
+                    <div class="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-bolt text-purple-400 text-2xl"></i>
                     </div>
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-shield-alt text-2xl text-white"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold mb-2">Secure</h3>
-                        <p class="text-gray-400">End-to-end encryption & privacy</p>
+                    <h3 class="text-xl font-bold mb-3">Instant Recovery</h3>
+                    <p class="text-gray-400">Restore your entire library from YouTube URLs in seconds using our advanced metadata engine.</p>
+                </div>
+                <div class="glass-card p-8 text-left group hover:border-pink-500/50 transition-all">
+                    <div class="w-14 h-14 bg-pink-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-sync text-pink-400 text-2xl"></i>
                     </div>
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-rocket text-2xl text-white"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold mb-2">Fast</h3>
-                        <p class="text-gray-400">Lightning-fast processing</p>
-                    </div>
+                    <h3 class="text-xl font-bold mb-3">Seamless Sync</h3>
+                    <p class="text-gray-400">Keep your local files and YouTube channel perfectly synchronized with automated backups.</p>
                 </div>
             </div>
-        </div>
-
-        <!-- Features Section -->
-        <div id="features-section" class="mb-20">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-bold mb-4">Powerful Features</h2>
-                <p class="text-gray-400 text-lg">Everything you need for professional video management</p>
-            </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="glass-card p-6 feature-card">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4">
-                        <i class="fas fa-upload text-white"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-3">Smart Upload</h3>
-                    <p class="text-gray-400 leading-relaxed">Upload videos with automatic AI analysis, metadata extraction, and secure encoding.</p>
-                </div>
-                <div class="glass-card p-6 feature-card">
-                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4">
-                        <i class="fas fa-search text-white"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-3">AI Search</h3>
-                    <p class="text-gray-400 leading-relaxed">Find videos instantly with intelligent search powered by machine learning.</p>
-                </div>
-                <div class="glass-card p-6 feature-card">
-                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
-                        <i class="fas fa-recycle text-white"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-3">Video Recovery</h3>
-                    <p class="text-gray-400 leading-relaxed">Recover videos from YouTube URLs with advanced download and decoding.</p>
-                </div>
-                <div class="glass-card p-6 feature-card">
-                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mb-4">
-                        <i class="fas fa-lock text-white"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-3">Privacy First</h3>
-                    <p class="text-gray-400 leading-relaxed">End-to-end encryption, anonymous mode, and GDPR compliance.</p>
-                </div>
-            </div>
-        </div>
+        </section>
 
         <!-- Dashboard Section -->
-        <div id="dashboard-section" class="section hidden">
-            <div class="mb-8">
-                <h2 class="text-3xl font-bold mb-2">Welcome back!</h2>
-                <p class="text-gray-400">Here's an overview of your YotuDrive activity</p>
+        <section id="dashboard-section" class="section">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+                <div>
+                    <h2 class="text-4xl font-extrabold">Welcome back, <span id="dash-user-name" class="gradient-text">Explorer</span></h2>
+                    <p class="text-gray-400 mt-2">Here's what's happening with your video library.</p>
+                </div>
+                <button onclick="showSection('upload')" class="btn-primary px-6 py-3">
+                    <i class="fas fa-plus mr-2"></i> New Upload
+                </button>
             </div>
 
-            <!-- Stats Cards -->
-            <div class="grid md:grid-cols-4 gap-6 mb-12">
-                <div class="glass-card p-6 text-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-upload text-white"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-1" id="upload-count">0</h3>
-                    <p class="text-gray-400 text-sm">Files Uploaded</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="glass-card p-6">
+                    <span class="text-gray-400 text-sm font-medium">Total Files</span>
+                    <div class="text-3xl font-bold mt-2" id="stat-total-files">0</div>
                 </div>
-                <div class="glass-card p-6 text-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-download text-white"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-1" id="recover-count">0</h3>
-                    <p class="text-gray-400 text-sm">Files Recovered</p>
+                <div class="glass-card p-6">
+                    <span class="text-gray-400 text-sm font-medium">Storage Used</span>
+                    <div class="text-3xl font-bold mt-2" id="stat-storage-used">0 MB</div>
                 </div>
-                <div class="glass-card p-6 text-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-shield-alt text-white"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-1" id="security-status">Active</h3>
-                    <p class="text-gray-400 text-sm">Security Status</p>
+                <div class="glass-card p-6">
+                    <span class="text-gray-400 text-sm font-medium">Monthly Recoveries</span>
+                    <div class="text-3xl font-bold mt-2" id="stat-recoveries">0</div>
                 </div>
-                <div class="glass-card p-6 text-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-brain text-white"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-1" id="ai-status">Ready</h3>
-                    <p class="text-gray-400 text-sm">AI Features</p>
+                <div class="glass-card p-6">
+                    <span class="text-gray-400 text-sm font-medium">Security Score</span>
+                    <div class="text-3xl font-bold mt-2 text-green-400">100%</div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="glass-card p-8 feature-card cursor-pointer" onclick="showSection('upload')">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-cloud-upload-alt text-white text-xl"></i>
-                        </div>
-                        <i class="fas fa-arrow-right text-gray-400"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-3">Upload Videos</h3>
-                    <p class="text-gray-400 leading-relaxed">Start uploading your videos with AI-powered analysis and secure encoding.</p>
+            <div class="glass-card overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Recent Content</h3>
+                    <button class="text-indigo-400 hover:text-indigo-300 text-sm font-bold">View All</button>
                 </div>
-                <div class="glass-card p-8 feature-card cursor-pointer" onclick="showSection('recover')">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-recycle text-white text-xl"></i>
-                        </div>
-                        <i class="fas fa-arrow-right text-gray-400"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-3">Recover Videos</h3>
-                    <p class="text-gray-400 leading-relaxed">Download and recover videos from YouTube URLs with advanced processing.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4 font-semibold">File Name</th>
+                                <th class="px-6 py-4 font-semibold">Size</th>
+                                <th class="px-6 py-4 font-semibold">Status</th>
+                                <th class="px-6 py-4 font-semibold text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="file-list-body">
+                            <tr class="border-t border-white/5">
+                                <td colspan="4" class="px-6 py-12 text-center text-gray-500 italic">
+                                    No videos uploaded yet. Start by uploading your first one!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Upload Section -->
-        <div id="upload-section" class="section hidden">
-            <div class="mb-8">
-                <h2 class="text-3xl font-bold mb-2">Upload Videos</h2>
-                <p class="text-gray-400">Upload your videos with AI analysis and secure encoding</p>
-            </div>
-
-            <!-- Upload Area -->
-            <div class="glass-card p-12 mb-8">
-                <div id="upload-area" class="upload-area p-16 text-center cursor-pointer">
-                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-cloud-upload-alt text-4xl text-white"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-3">Drop your videos here</h3>
-                    <p class="text-gray-400 mb-4">or click to browse files</p>
-                    <p class="text-sm text-gray-500">Supports MP4, MOV, AVI, and more • Up to 100MB per file</p>
-                    <input type="file" id="file-input" multiple accept="video/*,audio/*" class="hidden">
+        <section id="upload-section" class="section max-w-3xl mx-auto">
+            <h2 class="text-4xl font-extrabold mb-8 text-center">Secure <span class="gradient-text">Upload</span></h2>
+            <div class="glass-card p-12 text-center border-2 border-dashed border-white/10 hover:border-indigo-500/50 transition-all cursor-pointer" id="drop-zone">
+                <div class="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-cloud-upload-alt text-indigo-400 text-3xl"></i>
                 </div>
+                <h3 class="text-xl font-bold mb-2">Drag & drop video files</h3>
+                <p class="text-gray-400 mb-8">MP4, MOV, or AVI up to 100MB per file</p>
+                <input type="file" id="file-input" class="hidden" multiple accept="video/*" onchange="handleFileSelect(event)">
+                <button onclick="document.getElementById('file-input').click()" class="btn-primary px-8 py-3">Browse Files</button>
             </div>
-
-            <!-- Upload Progress -->
-            <div id="upload-progress" class="glass-card p-6 hidden">
-                <h3 class="text-xl font-bold mb-6">Processing Files</h3>
-                <div id="progress-container"></div>
-            </div>
-
-            <!-- Upload Form -->
-            <div id="upload-form" class="glass-card p-8 hidden">
-                <h3 class="text-xl font-bold mb-6">Video Details</h3>
-                <form id="video-details-form">
-                    <div class="grid md:grid-cols-2 gap-6" id="file-details"></div>
-                    <div class="flex justify-end mt-8 space-x-4">
-                        <button type="button" onclick="cancelUpload()" class="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
-                            Cancel
-                        </button>
-                        <button type="submit" class="btn-primary px-8 py-3">
-                            <i class="fas fa-rocket mr-2"></i>Start Processing
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        </section>
 
         <!-- Recovery Section -->
-        <div id="recover-section" class="section hidden">
-            <div class="mb-8">
-                <h2 class="text-3xl font-bold mb-2">Video Recovery</h2>
-                <p class="text-gray-400">Recover videos from YouTube URLs</p>
-            </div>
-
-            <div class="glass-card p-8 mb-8">
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">YouTube URL</label>
-                    <div class="relative">
-                        <input type="url" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..."
-                               class="input-field w-full p-4 pl-12 text-white">
-                        <i class="fab fa-youtube absolute left-4 top-1/2 transform -translate-y-1/2 text-red-500"></i>
-                    </div>
+        <section id="recovery-section" class="section max-w-2xl mx-auto text-center">
+            <h2 class="text-4xl font-extrabold mb-4">Video <span class="gradient-text">Recovery</span></h2>
+            <p class="text-gray-400 mb-12">Lost your local copy? Simply paste the YouTube URL and we'll restore it with full metadata integrity.</p>
+            
+            <div class="glass-card p-8">
+                <div class="relative">
+                    <i class="fab fa-youtube absolute left-4 top-1/2 -translate-y-1/2 text-red-500 text-xl"></i>
+                    <input type="text" id="recovery-url" class="input-field w-full pl-12 pr-4 py-4" placeholder="https://youtube.com/watch?v=...">
                 </div>
-                <button onclick="startRecovery()" class="btn-secondary px-8 py-4 text-lg">
-                    <i class="fas fa-search mr-2"></i>Analyze Video
-                </button>
+                <button onclick="startRecovery()" class="btn-primary w-full mt-6 py-4 text-lg">Initialize Recovery</button>
             </div>
+        </section>
 
-            <!-- Recovery Results -->
-            <div id="recovery-results" class="glass-card p-8 hidden">
-                <h3 class="text-xl font-bold mb-6">Video Information</h3>
-                <div id="video-info" class="mb-6"></div>
-                <div class="flex justify-end space-x-4">
-                    <button onclick="confirmRecovery(false)" class="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">
-                        Cancel
-                    </button>
-                    <button onclick="confirmRecovery(true)" class="btn-primary px-8 py-3">
-                        <i class="fas fa-download mr-2"></i>Start Recovery
-                    </button>
-                </div>
-            </div>
+    </main>
 
-            <!-- Recovery Progress -->
-            <div id="recovery-progress" class="glass-card p-6 hidden">
-                <h3 class="text-xl font-bold mb-6">Recovery Progress</h3>
-                <div id="recovery-status" class="space-y-4"></div>
-            </div>
-        </div>
-
-        <!-- Search Section -->
-        <div id="search-section" class="section hidden">
-            <div class="mb-8">
-                <h2 class="text-3xl font-bold mb-2">AI-Powered Search</h2>
-                <p class="text-gray-400">Find your videos instantly with intelligent search</p>
-            </div>
-
-            <div class="glass-card p-8 mb-8">
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold mb-3">Search Query</label>
-                    <div class="relative">
-                        <input type="text" id="search-query" placeholder="Search by content, filename, or description..."
-                               class="input-field w-full p-4 pl-12 text-white">
-                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-                </div>
-                <button onclick="performSearch()" class="btn-primary px-8 py-4 text-lg">
-                    <i class="fas fa-search mr-2"></i>Search Videos
-                </button>
-            </div>
-
-            <!-- Search Results -->
-            <div id="search-results" class="glass-card p-8 hidden">
-                <h3 class="text-xl font-bold mb-6">Search Results</h3>
-                <div id="results-list" class="space-y-4"></div>
-            </div>
-        </div>
-
-        <!-- Settings Section -->
-        <div id="settings-section" class="section hidden">
-            <div class="mb-8">
-                <h2 class="text-3xl font-bold mb-2">Settings</h2>
-                <p class="text-gray-400">Manage your privacy and security preferences</p>
-            </div>
-
-            <div class="grid lg:grid-cols-2 gap-8">
-                <div class="glass-card p-8">
-                    <h3 class="text-xl font-bold mb-6 flex items-center">
-                        <i class="fas fa-shield-alt mr-3 text-purple-400"></i>
-                        Privacy Settings
-                    </h3>
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <label class="font-medium">End-to-End Encryption</label>
-                                <p class="text-sm text-gray-400">Encrypt files before upload</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="encryption-enabled" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <label class="font-medium">AI Content Analysis</label>
-                                <p class="text-sm text-gray-400">Enable AI-powered analysis</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="ai-analysis-enabled" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                            </label>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <label class="font-medium">Anonymous Mode</label>
-                                <p class="text-sm text-gray-400">Hide personal information</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="anonymous-mode" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                            </label>
-                        </div>
-                        <div>
-                            <label class="block font-medium mb-2">YouTube Privacy</label>
-                            <select id="youtube-privacy" class="input-field w-full p-3">
-                                <option value="private">Private</option>
-                                <option value="unlisted">Unlisted</option>
-                                <option value="public">Public</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button onclick="savePrivacySettings()" class="btn-primary w-full mt-8 py-3">
-                        <i class="fas fa-save mr-2"></i>Save Settings
-                    </button>
-                </div>
-
-                <div class="glass-card p-8">
-                    <h3 class="text-xl font-bold mb-6 flex items-center">
-                        <i class="fas fa-chart-line mr-3 text-green-400"></i>
-                        Analytics
-                    </h3>
-                    <div id="analytics-data" class="text-center py-8">
-                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-chart-bar text-2xl text-white"></i>
-                        </div>
-                        <p class="text-gray-400">Analytics will appear here after login</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Login Modal -->
+    <!-- Modals -->
     <div id="login-modal" class="modal">
-        <div class="glass-card p-8 max-w-md w-full mx-4">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fab fa-youtube text-3xl text-white"></i>
-                </div>
-                <h3 class="text-2xl font-bold mb-2">Welcome to YotuDrive</h3>
-                <p class="text-gray-400">Sign in to access your account</p>
-            </div>
-            <button onclick="initiateGoogleLogin()" class="btn-primary w-full py-4 text-lg mb-4">
-                <i class="fab fa-google mr-3"></i>Continue with Google
+        <div class="glass-card w-full max-w-md p-10 relative">
+            <button onclick="closeModal('login-modal')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
             </button>
-            <button onclick="closeModal()" class="w-full text-gray-400 hover:text-white py-2 transition-colors">
-                Maybe Later
-            </button>
-        </div>
-    </div>
-
-    <!-- Loading Modal -->
-    <div id="loading-modal" class="modal">
-        <div class="glass-card p-8 max-w-sm w-full mx-4 text-center">
-            <div class="loading-spinner w-12 h-12 mx-auto mb-4"></div>
-            <h3 class="text-xl font-bold mb-2" id="loading-title">Loading...</h3>
-            <p class="text-gray-400" id="loading-message">Please wait</p>
-        </div>
-    </div>
-
-    <!-- Status Modal -->
-    <div id="status-modal" class="modal">
-        <div class="glass-card p-8 max-w-md w-full mx-4">
-            <div class="text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4" id="status-icon">
-                    <i class="fas fa-check text-2xl text-white"></i>
+            <h3 class="text-3xl font-extrabold mb-8 text-center">Welcome <span class="gradient-text">Back</span></h3>
+            <form onsubmit="handleLogin(event)" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-400 mb-2">Email Address</label>
+                    <input type="email" id="login-email" required class="input-field w-full px-4 py-3" placeholder="alex@example.com">
                 </div>
-                <h3 class="text-xl font-bold mb-2" id="status-title">Success!</h3>
-                <p class="text-gray-400 mb-6" id="status-message">Operation completed successfully</p>
-                <button onclick="closeModal()" class="btn-primary px-8 py-3">
-                    Continue
-                </button>
-            </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-400 mb-2">Password</label>
+                    <input type="password" id="login-password" required class="input-field w-full px-4 py-3" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary w-full py-4 text-lg shadow-xl">Login to Portal</button>
+                <p class="text-center text-gray-400 text-sm">
+                    Don't have an account? <button type="button" onclick="closeModal('login-modal'); openModal('register-modal')" class="text-indigo-400 font-bold hover:underline">Register</button>
+                </p>
+            </form>
         </div>
     </div>
 
+    <div id="register-modal" class="modal">
+        <div class="glass-card w-full max-w-md p-10 relative">
+            <button onclick="closeModal('register-modal')" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h3 class="text-3xl font-extrabold mb-8 text-center">Join <span class="gradient-text">YotuDrive</span></h3>
+            <form onsubmit="handleRegister(event)" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-400 mb-2">Full Name</label>
+                    <input type="text" id="reg-name" required class="input-field w-full px-4 py-3" placeholder="Alex Rivera">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-400 mb-2">Email Address</label>
+                    <input type="email" id="reg-email" required class="input-field w-full px-4 py-3" placeholder="alex@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-400 mb-2">Password</label>
+                    <input type="password" id="reg-password" required class="input-field w-full px-4 py-3" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary w-full py-4 text-lg shadow-xl">Create Account</button>
+                <p class="text-center text-gray-400 text-sm">
+                    Already have an account? <button type="button" onclick="closeModal('register-modal'); openModal('login-modal')" class="text-indigo-400 font-bold hover:underline">Login</button>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script>
+        const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+            ? 'http://127.0.0.1:5000' 
+            : 'https://yotudrive.onrender.com';
+        
         // Global variables
-        let currentSession = null;
-        let socket = null;
-        const API_BASE = 'https://yotudrive.onrender.com'; // Reverting to confirmed base URL
-        const VERCEL_URL = 'https://yotudrive.vercel.app';
+        let currentUser = null;
+        let token = localStorage.getItem('yotu_token');
 
-        // Fix for OAuth redirect: use the current origin if on Vercel
-        const getRedirectUri = () => {
-            const origin = window.location.origin.replace(/\/+$/, '');
-            if (window.location.hostname.includes('vercel.app')) {
-                return `${origin}/auth/callback`;
-            }
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                return `${origin}/auth/callback`;
-            }
-            return 'https://yotudrive.vercel.app/auth/callback';
-        };
-
-        // Comprehensive fetch wrapper to handle errors and logging
-        async function apiFetch(endpoint, options = {}) {
-            // Ensure absolute URL if it doesn't start with http
-            const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
-            
-            const defaultOptions = {
-                mode: 'cors', // Force CORS mode
-                credentials: 'omit', // Don't send cookies for now to avoid additional CORS issues
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    ...(currentSession ? { 'Authorization': `Bearer ${currentSession}` } : {})
-                }
-            };
-            
-            const mergedOptions = {
-                ...defaultOptions,
-                ...options,
-                headers: {
-                    ...defaultOptions.headers,
-                    ...(options.headers || {})
-                }
-            };
-
-            console.log(`[DEBUG] Fetching ${url}`, mergedOptions);
-            
-            try {
-                const response = await fetch(url, mergedOptions);
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`[ERROR] API Error (${response.status}):`, errorText);
-                    let errorData;
-                    try {
-                        errorData = JSON.parse(errorText);
-                    } catch (e) {
-                        errorData = { error: errorText || 'Unknown error' };
-                    }
-                    throw new Error(errorData.error || `Request failed with status ${response.status}`);
-                }
-                return await response.json();
-            } catch (error) {
-                console.error(`[ERROR] Fetch failed for ${url}:`, error);
-                if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-                    throw new Error('Could not connect to the server. Please ensure the backend is running and CORS is allowed.');
-                }
-                throw error;
-            }
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
         }
 
-        // Check backend health on load
-        async function checkBackendHealth() {
-            const statusIndicator = document.createElement('div');
-            statusIndicator.id = 'api-status-indicator';
-            statusIndicator.className = 'fixed bottom-4 right-4 flex items-center space-x-2 bg-black/50 backdrop-blur-md p-2 px-3 rounded-full text-xs border border-white/10 z-[100] transition-opacity duration-500';
-            statusIndicator.innerHTML = `
-                <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
-                <span class="text-gray-300">API: Connecting...</span>
-            `;
-            document.body.appendChild(statusIndicator);
-
-            try {
-                // Try health check with a timeout
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s for Render cold start
-                
-                const response = await fetch(`${API_BASE}/health`, { 
-                    signal: controller.signal,
-                    mode: 'cors',
-                    cache: 'no-cache'
-                });
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('[DEBUG] Backend health check:', data);
-                    statusIndicator.innerHTML = `
-                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                        <span class="text-gray-300">API: Online</span>
-                    `;
-                    setTimeout(() => statusIndicator.classList.add('opacity-0'), 3000);
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-            } catch (error) {
-                console.error('[ERROR] Backend health check failed:', error);
-                let errorMessage = 'API: Offline (Error)';
-                if (error.name === 'AbortError') {
-                    errorMessage = 'API: Connection Timeout (Still starting?)';
-                }
-                
-                statusIndicator.innerHTML = `
-                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span class="text-gray-300">${errorMessage}</span>
-                `;
-                
-                console.warn('%c[YotuDrive] API Connection failed. Possible reasons:', 'color: orange; font-weight: bold;');
-                console.warn('1. Backend might be sleeping (Render Free Tier spins down after 15 mins of inactivity). It can take up to 60 seconds to wake up.');
-                console.warn('2. SSL/HTTPS handshake issue.');
-                console.warn('3. CORS policy blocking.');
-                
-                // Retry after 5 seconds if it was a timeout
-                if (error.name === 'AbortError' || error.message.includes('fetch')) {
-                    setTimeout(() => {
-                        document.body.removeChild(statusIndicator);
-                        checkBackendHealth();
-                    }, 5000);
-                }
-            }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
         }
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if we are in the middle of an auth callback
-            const urlParams = new URLSearchParams(window.location.search);
-            const authCode = urlParams.get('code');
-            
-            if (authCode) {
-                // If we have an auth code, we MUST skip normal initialization 
-                // and handle the login immediately to prevent code expiration/reuse
-                console.log('[DEBUG] Auth code detected, prioritizing login flow');
-                initializeApp(true); 
-            } else {
-                initializeApp(false);
-            }
-            
-            setupFileUpload();
-            setupEventListeners();
-            checkBackendHealth();
-        });
-
-        function initializeApp(isAuthFlow = false) {
-            // Check for existing session
-            const savedSession = localStorage.getItem('yotudrive_session');
-            if (savedSession && !isAuthFlow) {
-                currentSession = savedSession;
-                updateUIForLoggedIn();
-                connectWebSocket();
-                loadDashboard();
-            }
-
-            // Check for auth code in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const authCode = urlParams.get('code');
-            const error = urlParams.get('error');
-
-            if (error) {
-                console.error('[ERROR] Google Auth Error:', error);
-                showStatusModal('error', 'Authentication Failed', `Google returned an error: ${error}`);
-                window.history.replaceState({}, document.title, window.location.pathname);
-                return;
-            }
-
-            if (authCode) {
-                console.log('[DEBUG] Auth code found in URL:', authCode);
-                // Clear URL parameters immediately to prevent reuse on refresh
-                window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // Use a small delay to ensure UI is ready
-                setTimeout(() => {
-                    completeGoogleLogin(decodeURIComponent(authCode));
-                }, 100);
-            }
-        }
-
-        function setupEventListeners() {
-            // Handle OAuth callback
-        }
-
-        function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-                setTimeout(() => {
-                    if (!section.classList.contains('active')) {
-                        section.style.display = 'none';
-                    }
-                }, 400); // Wait for transition
-            });
-            const landing = document.getElementById('landing-section');
-            if (landing) {
-                landing.style.opacity = '0';
-                setTimeout(() => {
-                    if (landing.style.opacity === '0') {
-                        landing.style.display = 'none';
-                    }
-                }, 400);
-            }
-
-            // Remove active class from nav buttons
-            document.querySelectorAll('.nav-link').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Show selected section
-            const section = document.getElementById(sectionName + '-section');
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            const section = document.getElementById(id + '-section');
             if (section) {
-                section.style.display = 'block';
-                // Trigger reflow
-                section.offsetHeight;
                 section.classList.add('active');
             }
-
-            // Add active class to nav button
-            const navBtn = document.getElementById(sectionName + '-btn');
-            if (navBtn) navBtn.classList.add('active');
-        }
-
-        function scrollToFeatures() {
-            document.getElementById('features-section').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function showLoginModal() {
-            document.getElementById('login-modal').classList.add('show');
-        }
-
-        function closeModal() {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.classList.remove('show');
-            });
-        }
-
-        function showLoadingModal(title, message) {
-            document.getElementById('loading-title').textContent = title;
-            document.getElementById('loading-message').textContent = message;
-            document.getElementById('loading-modal').classList.add('show');
-        }
-
-        function showStatusModal(type, title, message) {
-            const iconMap = {
-                success: 'fa-check',
-                error: 'fa-exclamation-triangle',
-                warning: 'fa-exclamation-circle',
-                info: 'fa-info-circle'
-            };
-
-            const colorMap = {
-                success: 'from-green-500 to-green-600',
-                error: 'from-red-500 to-red-600',
-                warning: 'from-yellow-500 to-yellow-600',
-                info: 'from-blue-500 to-blue-600'
-            };
-
-            document.getElementById('status-icon').className = `w-16 h-16 bg-gradient-to-br ${colorMap[type]} rounded-2xl flex items-center justify-center mx-auto mb-4`;
-            document.getElementById('status-icon').innerHTML = `<i class="fas ${iconMap[type]} text-2xl text-white"></i>`;
-            document.getElementById('status-title').textContent = title;
-            document.getElementById('status-message').textContent = message;
-            document.getElementById('status-modal').classList.add('show');
-        }
-
-        async function initiateGoogleLogin() {
-            try {
-                closeModal();
-                showLoadingModal('Connecting to Google', 'Redirecting to Google...');
-
-                // Google OAuth configuration
-                const clientId = '933593371934-i02bjdmk309b3a9b71qt4n3kop3edb60.apps.googleusercontent.com';
-                const redirectUri = getRedirectUri();
-                const scope = 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/youtube.upload';
-                const responseType = 'code';
-
-                // Build Google OAuth URL
-                const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-                    `client_id=${encodeURIComponent(clientId)}&` +
-                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-                    `scope=${encodeURIComponent(scope)}&` +
-                    `response_type=${responseType}&` +
-                    `access_type=offline&` +
-                    `prompt=consent`;
-
-                // Redirect to Google OAuth
-                window.location.href = googleAuthUrl;
-
-            } catch (error) {
-                closeModal();
-                showStatusModal('error', 'Login Failed', error.message);
-            }
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function cancelUpload() {
-            document.getElementById('upload-form').classList.add('hidden');
-            document.getElementById('upload-area').parentElement.classList.remove('hidden');
-            document.getElementById('video-details-form').reset();
-        }
-
-        async function completeGoogleLogin(authCode) {
-            try {
-                showLoadingModal('Authenticating', 'Verifying your account...');
-
-                // Log the code being sent (partial for security)
-                console.log(`[DEBUG] Sending auth code to backend: ${authCode.substring(0, 10)}...`);
-
-                const data = await apiFetch('/api/auth/google', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        authorization_code: authCode
-                    })
-                });
-
-                currentSession = data.session_id;
-                localStorage.setItem('yotudrive_session', currentSession);
-                localStorage.setItem('yotudrive_user', JSON.stringify(data.user));
-
-                updateUIForLoggedIn(data.user);
-                connectWebSocket();
-                loadDashboard();
-
-                closeModal();
-                showStatusModal('success', 'Welcome to YotuDrive!', `Successfully signed in as ${data.user.name || 'User'}`);
-
-                setTimeout(() => {
-                    closeModal();
-                    showSection('dashboard');
-                }, 2000);
-
-            } catch (error) {
-                closeModal();
-                showStatusModal('error', 'Authentication Failed', error.message);
-                console.error('Login error:', error);
-            }
-        }
-
-        function updateUIForLoggedIn(user = null) {
-            if (!user) {
-                const savedUser = localStorage.getItem('yotudrive_user');
-                if (savedUser) user = JSON.parse(savedUser);
-            }
-
-            document.getElementById('login-modal').classList.remove('show');
-            const landing = document.getElementById('landing-section');
-            if (landing) landing.style.display = 'none';
-
-            // Show navigation and user profile
-            const navButtons = ['dashboard-btn', 'upload-btn', 'recover-btn', 'search-btn', 'settings-btn'];
-            navButtons.forEach(id => {
-                const btn = document.getElementById(id);
-                if (btn) btn.classList.remove('hidden');
-            });
             
-            document.getElementById('login-btn').classList.add('hidden');
-            document.getElementById('user-profile').classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => {
+                if (l.dataset.section === id) l.classList.add('text-white', 'font-bold');
+                else l.classList.remove('text-white', 'font-bold');
+            });
 
-            if (user) {
-                document.getElementById('user-name').textContent = user.name || user.display_name || user.email || 'User';
+            if (id === 'dashboard') loadDashboardData();
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const name = document.getElementById('reg-name').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Registration successful! Please login.');
+                    closeModal('register-modal');
+                    openModal('login-modal');
+                } else {
+                    alert(data.error || 'Registration failed');
+                }
+            } catch (err) {
+                alert('Connection error');
             }
+        }
 
-            showSection('dashboard');
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    token = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('yotu_token', token);
+                    localStorage.setItem('yotu_user', JSON.stringify(currentUser));
+                    updateUIForLoggedIn();
+                    closeModal('login-modal');
+                    showSection('dashboard');
+                } else {
+                    alert(data.error || 'Login failed');
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+
+        function updateUIForLoggedIn() {
+            document.getElementById('logged-out-nav').classList.add('hidden');
+            document.getElementById('logged-in-nav').classList.remove('hidden');
+            document.getElementById('hero-section').classList.remove('active');
+            
+            const name = currentUser.name || currentUser.email.split('@')[0];
+            document.getElementById('user-name').textContent = name;
+            document.getElementById('dash-user-name').textContent = name;
         }
 
         function logout() {
-            localStorage.removeItem('yotudrive_session');
-            localStorage.removeItem('yotudrive_user');
-            currentSession = null;
-
-            // Reset UI
-            const navButtons = ['dashboard-btn', 'upload-btn', 'recover-btn', 'search-btn', 'settings-btn'];
-            navButtons.forEach(id => {
-                const btn = document.getElementById(id);
-                if (btn) btn.classList.add('hidden');
-            });
-            
-            document.getElementById('login-btn').classList.remove('hidden');
-            document.getElementById('user-profile').classList.add('hidden');
-
-            // Hide sections and show landing
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-                section.style.display = 'none';
-            });
-            const landing = document.getElementById('landing-section');
-            if (landing) landing.style.display = 'block';
-
-            // Disconnect socket
-            if (socket) {
-                socket.disconnect();
-                socket = null;
-            }
-
-            showStatusModal('success', 'Logged Out', 'You have been successfully logged out.');
-            setTimeout(() => {
-                closeModal();
-                window.location.reload();
-            }, 1500);
+            localStorage.removeItem('yotu_token');
+            localStorage.removeItem('yotu_user');
+            location.reload();
         }
 
-        function connectWebSocket() {
-            socket = io(API_BASE);
-
-            socket.on('connect', function() {
-                console.log('Connected to WebSocket');
-                if (currentSession) {
-                    socket.emit('join_session', {session_id: currentSession});
-                }
-            });
-
-            socket.on('upload_progress', function(data) {
-                updateUploadProgress(data);
-            });
-
-            socket.on('recovery_progress', function(data) {
-                updateRecoveryProgress(data);
-            });
-        }
-
-        async function loadDashboard() {
+        async function loadDashboardData() {
+            if (!token) return;
             try {
-                const data = await apiFetch('/api/analytics');
-                updateDashboardStats(data);
-            } catch (error) {
-                console.error('Failed to load dashboard:', error);
+                const [analyticsRes, filesRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/analytics`, { 
+                        headers: { 'Authorization': `Bearer ${token}` } 
+                    }),
+                    fetch(`${API_BASE}/api/files`, { 
+                        headers: { 'Authorization': `Bearer ${token}` } 
+                    })
+                ]);
+
+                if (analyticsRes.ok) {
+                    const analytics = await analyticsRes.json();
+                    document.getElementById('stat-total-files').textContent = analytics.total_files;
+                    document.getElementById('stat-storage-used').textContent = analytics.storage_used;
+                    document.getElementById('stat-recoveries').textContent = analytics.recoveries_this_month;
+                }
+
+                if (filesRes.ok) {
+                    const filesData = await filesRes.json();
+                    const tbody = document.getElementById('file-list-body');
+                    if (filesData.files && filesData.files.length > 0) {
+                        tbody.innerHTML = filesData.files.map(f => `
+                            <tr class="border-t border-white/5 hover:bg-white/[0.02] transition-colors">
+                                <td class="px-6 py-4 font-medium">${f.file_name}</td>
+                                <td class="px-6 py-4 text-gray-400">${(f.file_size / (1024*1024)).toFixed(2)} MB</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 bg-green-500/10 text-green-400 text-xs rounded-full font-bold">Synced</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-gray-400 hover:text-white"><i class="fas fa-ellipsis-v"></i></button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = `
+                            <tr class="border-t border-white/5">
+                                <td colspan="4" class="px-6 py-12 text-center text-gray-500 italic">
+                                    No videos uploaded yet. Start by uploading your first one!
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load dashboard', err);
             }
         }
 
-        function updateDashboardStats(data) {
-            document.getElementById('upload-count').textContent = data.total_files || 0;
-            document.getElementById('recover-count').textContent = data.recoveries_this_month || 0;
-            document.getElementById('security-status').textContent = 'Active';
-            document.getElementById('ai-status').textContent = 'Ready';
-            
-            // Update analytics section if visible
-            const analyticsDiv = document.getElementById('analytics-data');
-            if (analyticsDiv) {
-                analyticsDiv.innerHTML = `
-                    <div class="grid grid-cols-2 gap-4 text-left">
-                        <div class="p-4 bg-white/5 rounded-lg">
-                            <p class="text-sm text-gray-400">Total Files</p>
-                            <p class="text-xl font-bold">${data.total_files || 0}</p>
-                        </div>
-                        <div class="p-4 bg-white/5 rounded-lg">
-                            <p class="text-sm text-gray-400">Storage Used</p>
-                            <p class="text-xl font-bold">${data.storage_used || '0 B'}</p>
-                        </div>
-                        <div class="p-4 bg-white/5 rounded-lg">
-                            <p class="text-sm text-gray-400">Monthly Uploads</p>
-                            <p class="text-xl font-bold">${data.uploads_this_month || 0}</p>
-                        </div>
-                        <div class="p-4 bg-white/5 rounded-lg">
-                            <p class="text-sm text-gray-400">Storage Limit</p>
-                            <p class="text-xl font-bold">${data.storage_limit || '10 GB'}</p>
-                        </div>
-                    </div>
-                `;
-            }
-        }
+        async function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
 
-        function setupFileUpload() {
-            const uploadArea = document.getElementById('upload-area');
-            const fileInput = document.getElementById('file-input');
-
-            uploadArea.addEventListener('click', () => fileInput.click());
-            uploadArea.addEventListener('dragover', handleDragOver);
-            uploadArea.addEventListener('drop', handleFileDrop);
-            fileInput.addEventListener('change', handleFileSelect);
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.6)';
-            e.currentTarget.style.background = 'rgba(102, 126, 234, 0.05)';
-        }
-
-        function handleFileDrop(e) {
-            e.preventDefault();
-            const files = e.dataTransfer.files;
-            handleFiles(files);
-            resetUploadArea(e.currentTarget);
-        }
-
-        function handleFileSelect(e) {
-            const files = e.target.files;
-            handleFiles(files);
-        }
-
-        function resetUploadArea(area) {
-            area.style.borderColor = '';
-            area.style.background = '';
-        }
-
-        async function handleFiles(files) {
-            if (!currentSession) {
-                showLoginModal();
+            if (!token) {
+                openModal('login-modal');
                 return;
             }
 
-            const fileList = Array.from(files);
-            const simplifiedFiles = fileList.map(f => ({
-                name: f.name,
-                size: f.size,
-                type: f.type
-            }));
-
             try {
-                showLoadingModal('Initializing', 'Creating upload session...');
-                const data = await apiFetch('/api/upload/start', {
+                // Prepare files metadata
+                const simplifiedFiles = files.map(f => ({
+                    name: f.name,
+                    size: f.size,
+                    type: f.type
+                }));
+
+                const startRes = await fetch(`${API_BASE}/api/upload/start`, {
                     method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ files: simplifiedFiles })
                 });
 
-                closeModal();
-                
-                // Show details form
-                document.getElementById('upload-area').parentElement.classList.add('hidden');
-                document.getElementById('upload-form').classList.remove('hidden');
-                
-                const detailsContainer = document.getElementById('file-details');
-                detailsContainer.innerHTML = simplifiedFiles.map((f, i) => `
-                    <div class="p-6 bg-black bg-opacity-20 rounded-xl border border-white/10 mb-4">
-                        <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                                <i class="fas fa-video text-white"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-semibold text-lg truncate">${f.name}</h4>
-                                <p class="text-gray-400 text-sm">${formatFileSize(f.size)}</p>
-                            </div>
-                        </div>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block font-medium mb-2">Title</label>
-                                <input type="text" placeholder="Video title" class="input-field w-full p-3" name="title_${i}" value="${f.name.split('.')[0]}">
-                            </div>
-                            <div>
-                                <label class="block font-medium mb-2">Privacy</label>
-                                <select class="input-field w-full p-3" name="privacy_${i}">
-                                    <option value="private">Private</option>
-                                    <option value="unlisted" selected>Unlisted</option>
-                                    <option value="public">Public</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <label class="block font-medium mb-2">Description</label>
-                            <textarea placeholder="Video description" class="input-field w-full p-3 h-24 resize-none" name="description_${i}"></textarea>
-                        </div>
-                    </div>
-                `).join('');
+                if (!startRes.ok) throw new Error('Failed to start upload');
+                const startData = await startRes.json();
 
-                const form = document.getElementById('video-details-form');
-                form.onsubmit = (e) => {
-                    e.preventDefault();
-                    startProcessing(data.upload_session_id);
-                };
-
-            } catch (error) {
-                closeModal();
-                showStatusModal('error', 'Upload Error', error.message);
-                console.error('Upload start error:', error);
-            }
-        }
-
-        async function startProcessing(uploadSessionId) {
-            try {
-                document.getElementById('upload-form').classList.add('hidden');
-                document.getElementById('upload-progress').classList.remove('hidden');
-                
-                const progressContainer = document.getElementById('progress-container');
-                progressContainer.innerHTML = `
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-gray-300">Total Progress</span>
-                            <span id="process-percentage" class="font-bold text-blue-400">0%</span>
-                        </div>
-                        <div class="w-full bg-white/10 rounded-full h-3 overflow-hidden">
-                            <div id="process-bar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-                        </div>
-                        <p id="process-status" class="text-sm text-gray-500 mt-3 text-center italic">Starting processing...</p>
-                    </div>
-                `;
-
-                // Fake progress animation while waiting for backend
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    if (progress < 90) {
-                        progress += Math.random() * 5;
-                        updateProgressUI(Math.min(90, progress));
-                    }
-                }, 800);
-
-                const data = await apiFetch('/api/upload/process', {
+                // Start process
+                const processRes = await fetch(`${API_BASE}/api/upload/process`, {
                     method: 'POST',
-                    body: JSON.stringify({ upload_session_id: uploadSessionId })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        upload_session_id: startData.upload_session_id,
+                        files: simplifiedFiles
+                    })
                 });
 
-                clearInterval(progressInterval);
-                updateProgressUI(100, 'Processing complete!');
-
-                setTimeout(() => {
-                    showStatusModal('success', 'Upload Successful', `Successfully processed ${data.results.length} video(s).`);
+                if (processRes.ok) {
+                    alert('Upload successful!');
                     showSection('dashboard');
-                    loadDashboard();
-                    
-                    // Reset upload section for next time
-                    document.getElementById('upload-progress').classList.add('hidden');
-                    document.getElementById('upload-area').parentElement.classList.remove('hidden');
-                }, 1000);
-
-            } catch (error) {
-                document.getElementById('upload-progress').classList.add('hidden');
-                document.getElementById('upload-area').parentElement.classList.remove('hidden');
-                showStatusModal('error', 'Processing Error', error.message);
-                console.error('Processing error:', error);
+                }
+            } catch (err) {
+                alert('Upload failed: ' + err.message);
             }
-        }
-
-        function updateProgressUI(percentage, statusText) {
-            const bar = document.getElementById('process-bar');
-            const label = document.getElementById('process-percentage');
-            const status = document.getElementById('process-status');
-            
-            if (bar) bar.style.width = `${percentage}%`;
-            if (label) label.textContent = `${Math.round(percentage)}%`;
-            if (status && statusText) status.textContent = statusText;
         }
 
         async function startRecovery() {
-            const urlInput = document.getElementById('youtube-url');
-            const url = urlInput.value.trim();
-            if (!url) {
-                showStatusModal('warning', 'Missing URL', 'Please enter a valid YouTube URL to continue.');
-                return;
-            }
-
+            const url = document.getElementById('recovery-url').value;
+            if (!url) return alert('Please enter a YouTube URL');
+            
             try {
-                showLoadingModal('Analyzing Video', 'Connecting to YouTube API...');
-
-                const data = await apiFetch('/api/recover/start', {
+                const res = await fetch(`${API_BASE}/api/recover/start`, {
                     method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ youtube_url: url })
                 });
-
-                closeModal();
-
-                const results = document.getElementById('recovery-results');
-                const info = document.getElementById('video-info');
-
-                info.innerHTML = `
-                    <div class="bg-black bg-opacity-30 p-8 rounded-2xl border border-white/10">
-                        <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-                            <div class="w-full md:w-64 aspect-video bg-gradient-to-br from-red-500/20 to-purple-600/20 rounded-xl flex items-center justify-center border border-white/10 flex-shrink-0 shadow-2xl">
-                                <i class="fab fa-youtube text-6xl text-red-500"></i>
-                            </div>
-                            <div class="flex-1 text-center md:text-left">
-                                <h4 class="font-bold text-2xl mb-4 gradient-text">${url.length > 50 ? url.substring(0, 50) + '...' : url}</h4>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-                                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Status</p>
-                                        <p class="text-sm font-semibold text-green-400 flex items-center justify-center md:justify-start">
-                                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                                            ${data.status}
-                                        </p>
-                                    </div>
-                                    <div class="bg-white/5 p-4 rounded-xl border border-white/5">
-                                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">ID</p>
-                                        <p class="text-sm font-semibold truncate">${data.recovery_id.substring(0, 8)}...</p>
-                                    </div>
-                                </div>
-                                <p class="text-gray-400 text-sm mt-6 italic">Video identified. Recovery will restore original file fragments from the YouTube stream.</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                results.classList.remove('hidden');
-                results.classList.add('slide-in');
-                urlInput.value = ''; // Clear input
-
-            } catch (error) {
-                closeModal();
-                showStatusModal('error', 'Analysis Failed', error.message);
-                console.error('Recovery start error:', error);
-            }
-        }
-
-        async function confirmRecovery(confirmed) {
-            const results = document.getElementById('recovery-results');
-            if (!confirmed) {
-                results.classList.add('hidden');
-                return;
-            }
-
-            try {
-                showLoadingModal('Processing Recovery', 'Downloading and decoding video...');
-
-                const data = await apiFetch('/api/recover/confirm', {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        recovery_session_id: document.getElementById('video-info').querySelector('p.truncate').textContent.split('...')[0], 
-                        confirmed: true 
-                    })
-                });
-
-                closeModal();
-                results.classList.add('hidden');
-                
-                if (data.status === 'completed') {
-                    showStatusModal('success', 'Recovery Complete', `Successfully recovered ${data.recovered_files.length} file(s).`);
+                const data = await res.json();
+                if (res.ok) {
+                    alert('Recovery initialized for: ' + data.video_info.title);
+                    showSection('dashboard');
                 } else {
-                    showStatusModal('info', 'Recovery Started', 'The process is running in the background.');
+                    alert(data.error);
                 }
-                
+            } catch (err) {
+                alert('Recovery failed');
+            }
+        }
+
+        // Init
+        if (token && localStorage.getItem('yotu_user')) {
+            try {
+                currentUser = JSON.parse(localStorage.getItem('yotu_user'));
+                updateUIForLoggedIn();
                 showSection('dashboard');
-                loadDashboard();
-
-            } catch (error) {
-                closeModal();
-                showStatusModal('error', 'Recovery Failed', error.message);
-                console.error('Recovery confirm error:', error);
+            } catch (e) {
+                localStorage.removeItem('yotu_token');
+                localStorage.removeItem('yotu_user');
             }
         }
 
-        async function performSearch() {
-            const query = document.getElementById('search-query').value;
-            if (!query) {
-                showStatusModal('warning', 'Empty Query', 'Please enter a search term.');
-                return;
-            }
-
-            try {
-                showLoadingModal('Searching', 'Finding your videos...');
-
-                const data = await apiFetch('/api/search', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        query: query
-                    })
-                });
-
-                showSearchResults(data.results);
-
-            } catch (error) {
-                closeModal();
-                showStatusModal('error', 'Search Failed', error.message);
-            }
+        // Drop Zone
+        const dropZone = document.getElementById('drop-zone');
+        if (dropZone) {
+            dropZone.addEventListener('dragover', (e) => { 
+                e.preventDefault(); 
+                dropZone.classList.add('border-indigo-500/50', 'bg-indigo-500/5'); 
+            });
+            dropZone.addEventListener('dragleave', () => { 
+                dropZone.classList.remove('border-indigo-500/50', 'bg-indigo-500/5'); 
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-indigo-500/50', 'bg-indigo-500/5');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    alert(`Ready to upload ${files.length} files. (Feature implementation in progress)`);
+                }
+            });
         }
-
-        function showSearchResults(results) {
-            closeModal();
-
-            const resultsDiv = document.getElementById('search-results');
-            const resultsList = document.getElementById('results-list');
-
-            resultsList.innerHTML = '';
-
-            if (results.length === 0) {
-                resultsList.innerHTML = '<div class="text-center py-8"><div class="w-16 h-16 bg-gradient-to-br from-gray-500 to-gray-600 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="fas fa-search text-2xl text-white"></i></div><p class="text-gray-400">No videos found matching your search.</p></div>';
-            } else {
-                results.forEach(result => {
-                    const resultDiv = document.createElement('div');
-                    resultDiv.className = 'bg-black bg-opacity-20 p-6 rounded-xl hover:bg-opacity-30 transition-all cursor-pointer';
-                    resultDiv.innerHTML = `
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <h4 class="font-bold text-lg mb-2">${result.filename}</h4>
-                                <p class="text-gray-400 mb-3">${result.description || 'No description available'}</p>
-                                <div class="flex items-center space-x-4 text-sm">
-                                    <span class="text-blue-400">
-                                        <i class="fas fa-brain mr-1"></i>
-                                        Relevance: ${result.relevance_score || 'N/A'}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-video text-white"></i>
-                            </div>
-                        </div>
-                    `;
-                    resultsList.appendChild(resultDiv);
-                });
-            }
-
-            resultsDiv.classList.remove('hidden');
-        }
-
-        async function savePrivacySettings() {
-            try {
-                showLoadingModal('Saving Settings', 'Updating your preferences...');
-
-                const settings = {
-                    encryption_enabled: document.getElementById('encryption-enabled').checked,
-                    ai_analysis_enabled: document.getElementById('ai-analysis-enabled').checked,
-                    anonymous_mode: document.getElementById('anonymous-mode').checked,
-                    youtube_privacy: document.getElementById('youtube-privacy').value
-                };
-
-                await apiFetch('/api/privacy/settings', {
-                    method: 'POST',
-                    body: JSON.stringify(settings)
-                });
-
-                closeModal();
-                showStatusModal('success', 'Settings Saved', 'Your privacy settings have been updated successfully.');
-                setTimeout(closeModal, 2000);
-
-            } catch (error) {
-                closeModal();
-                showStatusModal('error', 'Save Failed', error.message);
-            }
-        }
-
-        function updateUploadProgress(data) {
-            console.log('Upload progress:', data);
-            // Update progress UI as needed
-        }
-
-        function updateRecoveryProgress(data) {
-            console.log('Recovery progress:', data);
-            // Update recovery UI as needed
-        }
-
-        // Initialize with landing page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show landing section by default for new users
-            if (!currentSession) {
-                document.getElementById('landing-section').classList.remove('hidden');
-            }
-        });
     </script>
 </body>
 </html>
