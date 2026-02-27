@@ -458,6 +458,7 @@
             const password = document.getElementById('login-password').value;
 
             try {
+                showLoadingModal('Logging in', 'Authenticating your credentials...');
                 const res = await fetch(`${API_BASE}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -469,14 +470,21 @@
                     currentUser = data.user;
                     localStorage.setItem('yotu_token', token);
                     localStorage.setItem('yotu_user', JSON.stringify(currentUser));
+                    
                     updateUIForLoggedIn();
+                    loadDashboardData();
+                    
+                    closeModal('loading-modal');
                     closeModal('login-modal');
+                    showStatusModal('success', 'Welcome!', `Successfully signed in as ${data.user.name}`);
                     showSection('dashboard');
                 } else {
-                    alert(data.error || 'Login failed');
+                    closeModal('loading-modal');
+                    showStatusModal('error', 'Login Failed', data.error || 'Invalid credentials');
                 }
             } catch (err) {
-                alert('Connection error');
+                closeModal('loading-modal');
+                showStatusModal('error', 'Connection Error', 'Could not reach the authentication server.');
             }
         }
 
@@ -629,6 +637,7 @@
             const name = document.getElementById('reg-name').value;
 
             try {
+                showLoadingModal('Creating Account', 'Setting up your secure space...');
                 const res = await fetch(`${API_BASE}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -636,14 +645,20 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alert('Registration successful! Please login.');
+                    closeModal('loading-modal');
                     closeModal('register-modal');
-                    openModal('login-modal');
+                    showStatusModal('success', 'Registration Successful!', 'Your account has been created. Please log in to continue.');
+                    setTimeout(() => {
+                        closeModal('status-modal');
+                        openModal('login-modal');
+                    }, 2000);
                 } else {
-                    alert(data.error || 'Registration failed');
+                    closeModal('loading-modal');
+                    showStatusModal('error', 'Registration Failed', data.error || 'Account creation failed');
                 }
             } catch (err) {
-                alert('Connection error');
+                closeModal('loading-modal');
+                showStatusModal('error', 'Connection Error', 'Could not reach the registration server.');
             }
         }
 
