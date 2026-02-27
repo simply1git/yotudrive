@@ -311,7 +311,7 @@
                 </div>
                 <h3 class="text-xl font-bold mb-2">Drag & drop video files</h3>
                 <p class="text-gray-400 mb-8">MP4, MOV, or AVI up to 100MB per file</p>
-                <input type="file" id="file-input" class="hidden" multiple accept="video/*" onchange="handleFileSelect(event)">
+                <input type="file" id="file-input" class="hidden" multiple accept="video/*" onchange="handleFiles(Array.from(event.target.files))">
                 <button onclick="document.getElementById('file-input').click()" class="btn-primary px-8 py-3">Browse Files</button>
             </div>
         </section>
@@ -505,7 +505,6 @@
                     
                     updateUIForLoggedIn();
                     loadDashboardData();
-                    connectWebSocket();
                     
                     closeModal('loading-modal');
                     closeModal('login-modal');
@@ -626,8 +625,7 @@
             if (status && statusText) status.textContent = statusText;
         }
 
-        async function handleFileSelect(e) {
-            const files = Array.from(e.target.files);
+        async function handleFiles(files) {
             if (files.length === 0) return;
 
             if (!token) {
@@ -657,22 +655,23 @@
                 const startData = await startRes.json();
 
                 // Start process
+                const formData = new FormData();
+                files.forEach(f => formData.append('files', f));
+                formData.append('upload_session_id', startData.upload_session_id);
+
                 const processRes = await fetch(`${API_BASE}/api/upload/process`, {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ 
-                        upload_session_id: startData.upload_session_id,
-                        files: simplifiedFiles
-                    })
+                    body: formData
                 });
 
                 if (processRes.ok) {
                     closeModal('loading-modal');
                     showStatusModal('success', 'Upload Successful', `Successfully uploaded ${files.length} video(s).`);
                     showSection('dashboard');
+                    loadDashboardData(); // Refresh the dashboard
                 } else {
                     throw new Error('Processing failed');
                 }
@@ -860,7 +859,7 @@
                 dropZone.classList.remove('border-indigo-500/50', 'bg-indigo-500/5');
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
-                    alert(`Ready to upload ${files.length} files. (Feature implementation in progress)`);
+                    handleFiles(Array.from(files));
                 }
             });
         }

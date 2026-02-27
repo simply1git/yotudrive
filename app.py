@@ -14,6 +14,8 @@ from functools import wraps
 from src.db import FileDatabase
 from src.enhanced_recovery import EnhancedRecoveryManager
 
+from werkzeug.utils import secure_filename
+
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 bcrypt = Bcrypt(app)
@@ -247,25 +249,32 @@ def start_upload(user_id):
 @token_required
 def process_upload(user_id):
     try:
-        data = request.get_json()
+        data = request.form
         upload_session_id = data.get('upload_session_id')
-        files = data.get('files', [])
+        files = request.files.getlist('files')
+        
+        upload_dir = 'uploads'
+        os.makedirs(upload_dir, exist_ok=True)
         
         results = []
-        for file_info in files:
+        for file in files:
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(upload_dir, filename)
+            file.save(filepath)
             video_id = f"yotu_{uuid.uuid4().hex[:12]}"
             db_id = db.add_file(
-                file_name=file_info['name'],
+                file_name=filename,
                 video_id=video_id,
-                file_size=file_info.get('size', 0),
+                file_size=os.path.getsize(filepath),
                 metadata={
                     'owner_id': user_id,
                     'upload_session': upload_session_id,
+                    'file_path': filepath,
                     'processed_at': time.time()
                 }
             )
             results.append({
-                'filename': file_info['name'],
+                'filename': filename,
                 'status': 'completed',
                 'video_id': video_id
             })
@@ -301,7 +310,7 @@ def start_recovery(user_id):
 def get_analytics(user_id):
     try:
         all_files = db.list_files()
-        user_files = [f for f in all_files if f.get('owner_id') == user_id]
+        user_files = [f for f in all_files if f.get('metadata', {}).get('owner_id') == user_id]
         total_size = sum(f.get('file_size', 0) for f in user_files)
         return jsonify({
             'total_files': len(user_files),
@@ -317,7 +326,7 @@ def get_analytics(user_id):
 def get_files(user_id):
     try:
         files = db.list_files()
-        user_files = [f for f in files if f.get('owner_id') == user_id]
+        user_files = [f for f in files if f.get('metadata', {}).get('owner_id') == user_id]
         return jsonify({'files': user_files})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
