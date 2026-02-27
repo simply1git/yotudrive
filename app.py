@@ -5,7 +5,7 @@ import uuid
 import secrets
 import jwt
 import datetime
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from functools import wraps
@@ -13,8 +13,15 @@ from functools import wraps
 # Import core YotuDrive modules
 from src.db import FileDatabase
 from src.enhanced_recovery import EnhancedRecoveryManager
+from src.encoder import Encoder
+from src.ffmpeg_utils import stitch
+from src.youtube import YouTubeManager
+from src.decoder import Decoder
 
 from werkzeug.utils import secure_filename
+
+import tempfile
+import shutil
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
@@ -85,6 +92,14 @@ def health_check():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    for dir in ['uploads', 'downloads']:
+        path = os.path.join(dir, filename)
+        if os.path.exists(path):
+            return send_from_directory(dir, filename)
+    return 'File not found', 404
 
 # --- Auth Endpoints ---
 
@@ -257,31 +272,41 @@ def process_upload(user_id):
         upload_session_id = data.get('upload_session_id')
         files = request.files.getlist('files')
         
-        upload_dir = 'uploads'
-        os.makedirs(upload_dir, exist_ok=True)
-        
         results = []
         for file in files:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(upload_dir, filename)
-            file.save(filepath)
-            video_id = f"yotu_{uuid.uuid4().hex[:12]}"
+            temp_file = os.path.join('temp', secure_filename(file.filename))
+            os.makedirs('temp', exist_ok=True)
+            file.save(temp_file)
+            
+            frames_dir = tempfile.mkdtemp()
+            encoder = Encoder(temp_file, frames_dir)
+            encoder.encode()
+            
+            video_file = os.path.join('uploads', secure_filename(file.filename).rsplit('.', 1)[0] + '.mp4')
+            os.makedirs('uploads', exist_ok=True)
+            stitch(frames_dir, video_file)
+            
+            # Add to db
             db_id = db.add_file(
-                file_name=filename,
-                video_id=video_id,
-                file_size=os.path.getsize(filepath),
+                file_name=secure_filename(file.filename),
+                video_id='',  # Not uploaded to YouTube yet
+                file_size=os.path.getsize(video_file),
                 metadata={
                     'owner_id': user_id,
                     'upload_session': upload_session_id,
-                    'file_path': filepath,
+                    'video_path': video_file,
+                    'original_filename': file.filename,
                     'processed_at': time.time()
                 }
             )
             results.append({
-                'filename': filename,
-                'status': 'completed',
-                'video_id': video_id
+                'filename': file.filename,
+                'video_download_url': f'/download/{os.path.basename(video_file)}'
             })
+            
+            # Clean up
+            os.remove(temp_file)
+            shutil.rmtree(frames_dir)
             
         return jsonify({
             'status': 'completed',
@@ -299,13 +324,24 @@ def start_recovery(user_id):
         if not youtube_url:
             return jsonify({'error': 'YouTube URL required'}), 400
             
-        recovery_id = recovery_manager.create_recovery_session(user_id, youtube_url)
-        # Mock identification for quick UI feedback
-        return jsonify({
-            'recovery_id': recovery_id,
-            'status': 'identified',
-            'video_info': {'title': 'YouTube Video', 'channel': 'Unknown'}
-        })
+        frames_dir = tempfile.mkdtemp()
+        youtube_manager = YouTubeManager()
+        if youtube_manager.download(youtube_url, frames_dir):
+            output_file = os.path.join('downloads', f'recovered_{uuid.uuid4().hex}.zip')
+            os.makedirs('downloads', exist_ok=True)
+            decoder = Decoder(frames_dir, output_file)
+            decoder.run()
+            
+            # Clean up frames
+            shutil.rmtree(frames_dir)
+            
+            return jsonify({
+                'recovery_id': str(uuid.uuid4()),
+                'status': 'completed',
+                'file_download_url': f'/download/{os.path.basename(output_file)}'
+            })
+        else:
+            return jsonify({'error': 'Download failed'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
