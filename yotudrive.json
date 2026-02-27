@@ -60,5 +60,18 @@
             "file_path": "uploads\\VID_20241115_200141.mp4",
             "processed_at": 1772190380.7963057
         }
+    },
+    "40b83b78-6139-471a-9c35-ff72c3d3de63": {
+        "id": "40b83b78-6139-471a-9c35-ff72c3d3de63",
+        "file_name": "VID_20241115_200141.mp4",
+        "video_id": "yotu_b2495f0e9cfa",
+        "file_size": 6972191,
+        "upload_date": 1772190784.6631513,
+        "metadata": {
+            "owner_id": "d8665e37-5e73-4b35-9808-b838d811eb7b",
+            "upload_session": "3818b9cb-6c7f-40ad-a97b-0c5b4cef2d9a",
+            "file_path": "uploads\\VID_20241115_200141.mp4",
+            "processed_at": 1772190784.6626482
+        }
     }
 }
