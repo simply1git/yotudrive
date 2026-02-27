@@ -54,7 +54,7 @@ def token_required(f):
         try:
             if "Bearer " in token:
                 token = token.split(" ")[1]
-            # Standardize Secret Key and Algorithm
+            # Standardize Secret Key and Algorithm for all login types
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
             current_user_id = data['user_id']
         except Exception as e:
@@ -130,6 +130,8 @@ def login():
 
     token = jwt.encode({
         'user_id': user_data['id'],
+        'email': email,
+        'auth_type': 'email',
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
     }, app.config['SECRET_KEY'], algorithm="HS256")
 
