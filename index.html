@@ -451,14 +451,14 @@
 
                 if (analyticsRes.ok) {
                     const analytics = await analyticsRes.json();
-                    document.getElementById('stat-total-files').textContent = analytics.total_files;
-                    document.getElementById('stat-storage-used').textContent = analytics.storage_used;
-                    document.getElementById('stat-recoveries').textContent = analytics.recoveries_this_month;
+                    document.getElementById('stat-total-files').textContent = analytics.total_files || 0;
+                    document.getElementById('stat-storage-used').textContent = analytics.storage_used || '0 MB';
+                    document.getElementById('stat-recoveries').textContent = analytics.recoveries_this_month || 0;
                 }
 
+                const tbody = document.getElementById('file-list-body');
                 if (filesRes.ok) {
                     const filesData = await filesRes.json();
-                    const tbody = document.getElementById('file-list-body');
                     if (filesData.files && filesData.files.length > 0) {
                         tbody.innerHTML = filesData.files.map(f => `
                             <tr class="border-t border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -481,6 +481,14 @@
                             </tr>
                         `;
                     }
+                } else {
+                    tbody.innerHTML = `
+                        <tr class="border-t border-white/5">
+                            <td colspan="4" class="px-6 py-12 text-center text-red-400 italic">
+                                Failed to load files. Please try again.
+                            </td>
+                        </tr>
+                    `;
                 }
             } catch (err) {
                 console.error('Failed to load dashboard', err);
