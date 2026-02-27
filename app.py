@@ -54,10 +54,13 @@ def token_required(f):
         try:
             if "Bearer " in token:
                 token = token.split(" ")[1]
+            # Ensure JWT is decoded using the same key and algorithm
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
             current_user_id = data['user_id']
         except Exception as e:
-            return jsonify({'message': 'Token is invalid!'}), 401
+            # Enhanced logging for token errors
+            print(f"[ERROR] JWT Token validation failed: {str(e)}")
+            return jsonify({'message': f'Token is invalid! {str(e)}'}), 401
         return f(current_user_id, *args, **kwargs)
     return decorated
 
