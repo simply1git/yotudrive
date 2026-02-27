@@ -12,9 +12,11 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 import hashlib
 
-from src.config_manager import config_manager
-from src.advanced_logger import get_logger
-from src.utils import YotuDriveException, ErrorCodes, FileValidator, NamingConvention
+from .config_manager import config_manager
+from .advanced_logger import get_logger
+from .utils import YotuDriveException, ErrorCodes, FileValidator, NamingConvention
+from .privacy_security import PrivacyManager
+from .ai_features import AIFeatureManager
 
 logger = get_logger()
 

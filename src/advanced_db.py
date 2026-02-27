@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
-from .utils import YotuDriveException, ErrorCodes, safe_file_operation, ensure_directory_exists
+from .config_manager import config_manager
+from .utils import ValidationError, YotuDriveException, ErrorCodes, safe_file_operation, ensure_directory_exists
 from .advanced_logger import get_logger
 
 logger = get_logger()

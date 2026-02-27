@@ -54,13 +54,12 @@ def token_required(f):
         try:
             if "Bearer " in token:
                 token = token.split(" ")[1]
-            # Ensure JWT is decoded using the same key and algorithm
+            # Standardize Secret Key and Algorithm
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
             current_user_id = data['user_id']
         except Exception as e:
-            # Enhanced logging for token errors
             print(f"[ERROR] JWT Token validation failed: {str(e)}")
-            return jsonify({'message': f'Token is invalid! {str(e)}'}), 401
+            return jsonify({'message': f'Invalid session. Please login again.'}), 401
         return f(current_user_id, *args, **kwargs)
     return decorated
 
@@ -192,19 +191,23 @@ def google_auth():
                 'name': user_info.get('name'),
                 'google_id': user_info.get('id'),
                 'picture': user_info.get('picture'),
-                'auth_type': 'google'
+                'auth_type': 'google',
+                'created_at': time.time()
             }
             save_users(users)
         else:
-            # Update existing user info from Google
+            # Update existing user info from Google to ensure consistency
             users[email]['google_id'] = user_info.get('id')
             users[email]['picture'] = user_info.get('picture')
             users[email]['auth_type'] = 'google'
+            users[email]['last_login'] = time.time()
             save_users(users)
         
         user_data = users[email]
         token = jwt.encode({
             'user_id': user_data['id'],
+            'email': email,
+            'auth_type': 'google',
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         }, app.config['SECRET_KEY'], algorithm="HS256")
 

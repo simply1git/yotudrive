@@ -2,8 +2,8 @@ import os
 import shutil
 import uuid
 import time
-from src.decoder import Decoder, _process_frame
-from src.ffmpeg_utils import extract_frames
+from .decoder import Decoder, _process_frame
+from .ffmpeg_utils import extract_frames
 import numpy as np
 
 def verify_video(video_path):

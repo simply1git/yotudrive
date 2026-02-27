@@ -10,10 +10,10 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from src.config_manager import config_manager
-from src.advanced_logger import get_logger
-from src.utils import YotuDriveException, ErrorCodes
-from src.google_integration import YouTubeManager
+from .config_manager import config_manager
+from .advanced_logger import get_logger
+from .utils import YotuDriveException, ErrorCodes
+from .google_integration import YouTubeManager
 
 logger = get_logger()
 

@@ -16,9 +16,9 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import base64
 
-from src.config_manager import config_manager
-from src.advanced_logger import get_logger
-from src.utils import YotuDriveException, ErrorCodes
+from .config_manager import config_manager
+from .advanced_logger import get_logger
+from .utils import YotuDriveException, ErrorCodes
 
 logger = get_logger()
 

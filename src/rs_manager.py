@@ -1,5 +1,5 @@
 import reedsolo
-from src.config import DEFAULT_ECC_BYTES, RS_BLOCK_SIZE
+from .config import DEFAULT_ECC_BYTES, RS_BLOCK_SIZE
 import concurrent.futures
 import os
 import math
