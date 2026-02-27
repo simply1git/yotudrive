@@ -547,6 +547,53 @@
             }
         }
 
+        async function connectWebSocket() {
+            if (!token) return;
+            
+            // Disconnect existing socket if any
+            if (socket) {
+                socket.disconnect();
+            }
+
+            socket = io(API_BASE, {
+                auth: {
+                    token: token
+                },
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000
+            });
+
+            socket.on('connect', function() {
+                console.log('[DEBUG] Connected to WebSocket');
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('[ERROR] WebSocket connection error:', error);
+            });
+
+            socket.on('upload_progress', function(data) {
+                if (typeof updateProgressUI === 'function') {
+                    updateProgressUI(data.percentage, data.status);
+                }
+            });
+
+            socket.on('recovery_progress', function(data) {
+                console.log('[DEBUG] Recovery progress:', data);
+            });
+        }
+
+        function updateProgressUI(percentage, statusText) {
+            const bar = document.getElementById('progress-bar');
+            const label = document.getElementById('progress-percentage');
+            const status = document.getElementById('process-status');
+            
+            if (bar) bar.style.width = `${percentage}%`;
+            if (label) label.textContent = `${Math.round(percentage)}%`;
+            if (status && statusText) status.textContent = statusText;
+        }
+
         async function handleFileSelect(e) {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
