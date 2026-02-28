@@ -790,7 +790,7 @@
                     if (processRes.ok) {
                         closeModal('loading-modal');
                         const data = await processRes.json();
-                        const downloadLinks = data.results.map(r => `<a href="${r.video_download_url}" target="_blank" download>Download ${r.filename} Video</a>`).join('<br>');
+                        const downloadLinks = data.results.map(r => `<a href="${API_BASE}${r.video_download_url}" target="_blank" download>Download ${r.filename} Video</a>`).join('<br>');
                         showStatusModal('success', 'Encoding Complete', `Files encoded to videos:<br>${downloadLinks}`);
                         showSection('dashboard');
                         loadDashboardData(); // Refresh the dashboard
@@ -824,8 +824,7 @@
                 const data = await res.json();
                 if (res.ok) {
                     closeModal('loading-modal');
-                    const data = await res.json();
-                    const downloadLink = `<a href="${data.file_download_url}" target="_blank" download>Download Recovered File</a>`;
+                    const downloadLink = `<a href="${API_BASE}${data.file_download_url}" target="_blank" download>Download Recovered File</a>`;
                     showStatusModal('success', 'Recovery Complete', `File recovered successfully.<br>${downloadLink}`);
                     showSection('dashboard');
                 } else {
