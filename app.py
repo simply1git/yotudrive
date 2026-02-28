@@ -5,6 +5,7 @@ import uuid
 import secrets
 import jwt
 import datetime
+import logging
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -23,23 +24,31 @@ from werkzeug.utils import secure_filename
 import tempfile
 import shutil
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 bcrypt = Bcrypt(app)
 
-# ... existing code ...
-
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_urlsafe(32))
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['TEMP_FOLDER'] = 'temp'
+app.config['DOWNLOAD_FOLDER'] = 'downloads'
+
+# Ensure directories exist
+for folder in [app.config['UPLOAD_FOLDER'], app.config['TEMP_FOLDER'], app.config['DOWNLOAD_FOLDER'], 'data']:
+    os.makedirs(folder, exist_ok=True)
 
 # Initialize Core Managers
 db = FileDatabase()
 recovery_manager = EnhancedRecoveryManager()
 
-# Simple user storage for email login (In production, use a database)
+# Simple user storage for email login
 USERS_FILE = 'data/users.json'
-os.makedirs('data', exist_ok=True)
 if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, 'w') as f:
         json.dump({}, f)
@@ -48,12 +57,16 @@ def load_users():
     try:
         with open(USERS_FILE, 'r') as f:
             return json.load(f)
-    except:
+    except Exception as e:
+        logger.error(f"Error loading users: {e}")
         return {}
 
 def save_users(users):
-    with open(USERS_FILE, 'w') as f:
-        json.dump(users, f)
+    try:
+        with open(USERS_FILE, 'w') as f:
+            json.dump(users, f, indent=2)
+    except Exception as e:
+        logger.error(f"Error saving users: {e}")
 
 # Token decorator
 def token_required(f):
@@ -96,11 +109,24 @@ def index():
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    for dir in ['uploads', 'downloads']:
-        path = os.path.join(dir, filename)
-        if os.path.exists(path):
-            return send_from_directory(dir, filename)
-    return 'File not found', 404
+    """Secure file download endpoint"""
+    try:
+        # Sanitize filename
+        filename = secure_filename(filename)
+        if not filename:
+            return 'Invalid filename', 400
+        
+        # Check in uploads and downloads directories
+        for directory in [app.config['UPLOAD_FOLDER'], app.config['DOWNLOAD_FOLDER']]:
+            file_path = os.path.join(directory, filename)
+            if os.path.exists(file_path) and os.path.isfile(file_path):
+                return send_from_directory(directory, filename, as_attachment=True)
+        
+        return 'File not found', 404
+        
+    except Exception as e:
+        logger.error(f"Download error for {filename}: {e}")
+        return 'Download failed', 500
 
 # --- Auth Endpoints ---
 
@@ -273,49 +299,70 @@ def process_upload(user_id):
         upload_session_id = data.get('upload_session_id')
         files = request.files.getlist('files')
         
+        if not files or all(f.filename == '' for f in files):
+            return jsonify({'error': 'No files provided'}), 400
+        
         results = []
         for file in files:
-            temp_file = os.path.join('temp', secure_filename(file.filename))
-            os.makedirs('temp', exist_ok=True)
-            file.save(temp_file)
-            
-            frames_dir = os.path.join('temp', str(uuid.uuid4()))
-            os.makedirs(frames_dir, exist_ok=True)
-            encoder = Encoder(temp_file, frames_dir)
-            encoder.encode()
-            
-            video_file = os.path.join('uploads', secure_filename(file.filename).rsplit('.', 1)[0] + '.mp4')
-            os.makedirs('uploads', exist_ok=True)
-            stitch(frames_dir, video_file)
-            
-            # Add to db
-            db_id = db.add_file(
-                file_name=secure_filename(file.filename),
-                video_id='',  # Not uploaded to YouTube yet
-                file_size=os.path.getsize(video_file),
-                metadata={
-                    'owner_id': user_id,
-                    'upload_session': upload_session_id,
-                    'video_path': video_file,
-                    'original_filename': file.filename,
-                    'processed_at': time.time()
-                }
-            )
-            results.append({
-                'filename': file.filename,
-                'video_download_url': f'/download/{os.path.basename(video_file)}'
-            })
-            
-            # Clean up
-            os.remove(temp_file)
-            shutil.rmtree(frames_dir)
-            
+            if file.filename == '':
+                continue
+                
+            try:
+                # Save uploaded file temporarily
+                temp_file = os.path.join(app.config['TEMP_FOLDER'], secure_filename(file.filename))
+                file.save(temp_file)
+                
+                # Encode file to frames
+                frames_dir = os.path.join(app.config['TEMP_FOLDER'], str(uuid.uuid4()))
+                os.makedirs(frames_dir, exist_ok=True)
+                
+                encoder = Encoder(temp_file, frames_dir)
+                encoder.encode()
+                
+                # Stitch frames to video
+                video_filename = secure_filename(file.filename).rsplit('.', 1)[0] + '.mp4'
+                video_file = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
+                
+                stitch(frames_dir, video_file)
+                
+                # Add to database
+                db.add_file(
+                    file_name=secure_filename(file.filename),
+                    video_id='',  # Not uploaded to YouTube yet
+                    file_size=os.path.getsize(video_file),
+                    metadata={
+                        'owner_id': user_id,
+                        'upload_session': upload_session_id,
+                        'video_path': video_file,
+                        'original_filename': file.filename,
+                        'processed_at': time.time()
+                    }
+                )
+                
+                results.append({
+                    'filename': file.filename,
+                    'video_download_url': f'/download/{video_filename}'
+                })
+                
+                # Clean up
+                os.remove(temp_file)
+                shutil.rmtree(frames_dir)
+                
+            except Exception as e:
+                logger.error(f"Error processing file {file.filename}: {e}")
+                results.append({
+                    'filename': file.filename,
+                    'error': str(e)
+                })
+        
         return jsonify({
             'status': 'completed',
             'results': results
         })
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Upload processing error: {e}")
+        return jsonify({'error': 'Upload processing failed'}), 500
 
 @app.route('/api/recover/start', methods=['POST'])
 @token_required
@@ -323,30 +370,49 @@ def start_recovery(user_id):
     try:
         data = request.get_json()
         youtube_url = data.get('youtube_url')
+        
         if not youtube_url:
             return jsonify({'error': 'YouTube URL required'}), 400
             
-        frames_dir = os.path.join('temp', str(uuid.uuid4()))
+        # Validate YouTube URL
+        if 'youtube.com' not in youtube_url and 'youtu.be' not in youtube_url:
+            return jsonify({'error': 'Invalid YouTube URL'}), 400
+        
+        # Download and extract frames
+        frames_dir = os.path.join(app.config['TEMP_FOLDER'], str(uuid.uuid4()))
         os.makedirs(frames_dir, exist_ok=True)
-        youtube_manager = YouTubeManager()
-        if youtube_manager.download(youtube_url, frames_dir):
-            output_file = os.path.join('downloads', f'recovered_{uuid.uuid4().hex}.zip')
-            os.makedirs('downloads', exist_ok=True)
-            decoder = Decoder(frames_dir, output_file)
-            decoder.run()
+        
+        try:
+            youtube_manager = YouTubeManager()
+            if youtube_manager.download(youtube_url, frames_dir):
+                # Decode frames back to file
+                output_filename = f'recovered_{uuid.uuid4().hex}.zip'
+                output_file = os.path.join(app.config['DOWNLOAD_FOLDER'], output_filename)
+                
+                decoder = Decoder(frames_dir, output_file)
+                decoder.run()
+                
+                # Clean up frames
+                shutil.rmtree(frames_dir)
+                
+                return jsonify({
+                    'recovery_id': str(uuid.uuid4()),
+                    'status': 'completed',
+                    'file_download_url': f'/download/{output_filename}'
+                })
+            else:
+                return jsonify({'error': 'Failed to download YouTube video'}), 500
+                
+        except Exception as e:
+            logger.error(f"Recovery processing error: {e}")
+            # Clean up on error
+            if os.path.exists(frames_dir):
+                shutil.rmtree(frames_dir)
+            return jsonify({'error': 'Recovery processing failed'}), 500
             
-            # Clean up frames
-            shutil.rmtree(frames_dir)
-            
-            return jsonify({
-                'recovery_id': str(uuid.uuid4()),
-                'status': 'completed',
-                'file_download_url': f'/download/{os.path.basename(output_file)}'
-            })
-        else:
-            return jsonify({'error': 'Download failed'}), 500
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Recovery error: {e}")
+        return jsonify({'error': 'Recovery failed'}), 500
 
 @app.route('/api/analytics', methods=['GET'])
 @token_required
@@ -355,14 +421,15 @@ def get_analytics(user_id):
         all_files = db.list_files()
         user_files = [f for f in all_files if f.get('metadata', {}).get('owner_id') == user_id]
         total_size = sum(f.get('file_size', 0) for f in user_files)
+        
         return jsonify({
             'total_files': len(user_files),
-            'storage_used': f"{round(total_size / (1024*1024), 2)} MB",
-            'storage_limit': '10 GB',
-            'recoveries_this_month': 0
+            'total_size': total_size,
+            'files': user_files
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Analytics error: {e}")
+        return jsonify({'error': 'Failed to get analytics'}), 500
 
 @app.route('/api/files', methods=['GET'])
 @token_required
@@ -372,7 +439,8 @@ def get_files(user_id):
         user_files = [f for f in files if f.get('metadata', {}).get('owner_id') == user_id]
         return jsonify({'files': user_files})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Files list error: {e}")
+        return jsonify({'error': 'Failed to get files'}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
