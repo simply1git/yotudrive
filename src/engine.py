@@ -14,6 +14,8 @@ Encoder/Decoder/FFmpeg/YouTube primitives directly.
 """
 
 import os
+import re
+import shutil
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -289,6 +291,82 @@ class YotuDriveEngine:
         decoder.run()
 
         return DecodeResult(output_path=decoder.output_file)
+
+    def recover_any(
+        self,
+        youtube_url: str,
+        *,
+        settings: Optional[DecodeSettings] = None,
+        cookies_browser: Optional[str] = None,
+        cookies_file: Optional[str] = None,
+        progress_callback: ProgressCallback = None,
+        check_cancel: CancelCallback = None,
+    ) -> DecodeResult:
+        """
+        Recover from either a single YouTube video URL or a playlist URL.
+        """
+        # Heuristic: treat URLs containing 'list=' or '/playlist' as playlists
+        if "list=" in youtube_url or "playlist" in youtube_url:
+            return self.recover_from_playlist(
+                youtube_url,
+                settings=settings,
+                cookies_browser=cookies_browser,
+                cookies_file=cookies_file,
+                progress_callback=progress_callback,
+                check_cancel=check_cancel,
+            )
+        # Fallback to single-video recovery
+        return self.recover_from_youtube(
+            youtube_url,
+            settings=settings,
+            cookies_browser=cookies_browser,
+            cookies_file=cookies_file,
+            progress_callback=progress_callback,
+            check_cancel=check_cancel,
+        )
+
+    def recover_from_playlist(
+        self,
+        playlist_url: str,
+        *,
+        settings: Optional[DecodeSettings] = None,
+        cookies_browser: Optional[str] = None,
+        cookies_file: Optional[str] = None,
+        progress_callback: ProgressCallback = None,
+        check_cancel: CancelCallback = None,
+    ) -> DecodeResult:
+        """
+        Restore a sequence of split files from a single YouTube playlist URL
+        and auto-join them into the original file.
+        """
+        yt = YouTubeStorage(temp_dir=self.temp_dir)
+        entries = yt.get_playlist_info(playlist_url)
+        if not entries:
+            raise YotuDriveException(
+                f"Playlist is empty or cannot be read: {playlist_url}",
+                ErrorCodes.DOWNLOAD_FAILED,
+            )
+
+        # Decode each playlist entry in order
+        part_files: List[Path] = []
+        for entry in entries:
+            if check_cancel:
+                check_cancel()
+            url = entry.get("url")
+            if not url:
+                continue
+            result = self.recover_from_youtube(
+                url,
+                settings=settings,
+                cookies_browser=cookies_browser,
+                cookies_file=cookies_file,
+                progress_callback=progress_callback,
+                check_cancel=check_cancel,
+            )
+            part_files.append(Path(result.output_path))
+
+        final_path = self._auto_join_parts(part_files)
+        return DecodeResult(output_path=str(final_path))
 
     # -------------------------------------------------------------------------
     # Internal helpers
