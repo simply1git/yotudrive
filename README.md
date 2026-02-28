@@ -13,14 +13,14 @@
 
 *   **Robust Encoding Engine**: Custom **Block-Based Monochrome Encoding** (4x4 pixel blocks) designed to survive YouTube's aggressive compression
 *   **Advanced Error Correction**: **Reed-Solomon (RS)** codes with configurable ECC bytes (default 10, range 1-50) ensure data integrity
-*   **Military-Grade Security**: **AES-256 encryption** with PBKDF2 key derivation
+*   **Military-Grade Security**: **Fernet (AES-128)** encryption with PBKDF2 key derivation and per-file salts
 *   **Modern Web Interface**: Clean, responsive UI with real-time progress tracking, theme switching (light/dark), and advanced settings
 *   **YouTube Integration**: Automated video downloads via `yt-dlp` with frame extraction
 *   **Cross-Platform**: Works on any device with a web browser
 *   **Hardware Acceleration**: Supports NVIDIA (NVENC), Intel (QSV), and AMD (AMF) codecs for faster encoding
 *   **Large File Support**: Automatic splitting of files > specified size (MB) into chunks, each encoded separately
 *   **Batch Processing**: Upload and encode multiple files in a single session
-*   **Compression Options**: Configurable compression methods (store/no compression, deflate/fast, lzma/best, bzip2)
+*   **Compression Options**: Configurable compression (currently Deflate/fast and Store/no compression; architecture-ready for LZMA/BZIP2)
 *   **JWT Authentication**: Secure login with email/password and Google OAuth
 *   **Real-time Analytics**: Track storage usage, file count, and upload history
 *   **Theme Switching**: Light and dark mode with user preference persistence
@@ -89,8 +89,11 @@ cd yotudrive
 # Install dependencies
 pip install -r requirements.txt
 
-# Run backend
+# Run backend API (Flask)
 python app.py
+
+# Launch desktop GUI
+python -m src.main_gui
 ```
 
 ### Environment Variables
@@ -111,15 +114,19 @@ GOOGLE_REDIRECT_URI=https://yotudrive.vercel.app/auth/callback
 - `POST /api/auth/google` - Google OAuth login
 - `POST /api/upload/start` - Initialize upload session
 - `POST /api/upload/process` - File encoding with settings
-- `POST /api/recover/start` - File recovery from YouTube
+- `POST /api/recover/start` - File recovery from YouTube (single video or playlist with auto-join)
 - `GET /api/files` - List user files
 - `GET /api/analytics` - User analytics and stats
+- `POST /api/youtube/upload` - Optional YouTube Data API upload for encoded videos (OAuth-based)
 - `GET /download/<filename>` - Secure file downloads
 
 ### Core Components
-- **Encoder (`src/encoder.py`)**: Converts files to video frames with ECC and compression
-- **Decoder (`src/decoder.py`)**: Recovers files from video frames
-- **YouTube Manager (`src/youtube.py`)**: Handles video downloads via yt-dlp
+- **Engine (`src/engine.py`)**: High-level encode/decode/split/playlist orchestration shared by web and desktop UIs
+- **Encoder (`src/encoder.py`)**: Converts files to video frames with Reed-Solomon ECC and streaming-friendly encryption
+- **Decoder (`src/decoder.py`)**: Recovers files from video frames (including V5 streaming mode and header majority recovery)
+- **YouTube Storage (`src/youtube.py`)**: Handles robust video downloads via yt-dlp
+- **Google Integration (`src/google_integration.py`)**: OAuth + YouTube Data API upload support
+- **Desktop GUI (`src/main_gui.py`)**: Local tabbed interface (My Files, Encode, Decode, Tools, Settings)
 - **FFmpeg Utils (`src/ffmpeg_utils.py`)**: Video stitching with hardware acceleration
 - **Database (`src/db.py`)**: JSON-based storage for metadata
 - **Authentication**: JWT with Google OAuth support
@@ -150,7 +157,7 @@ Video Download → Frame Extraction → Decoding → Joining → Decryption → 
 - Input validation and XSS protection
 - CORS protection for API endpoints
 - Comprehensive error handling and logging
-- AES-256 encryption for sensitive data
+- Fernet (AES-128) encryption for sensitive data with per-file salts and PBKDF2 key derivation
 - PBKDF2 key derivation for encryption keys
 - Secure temporary file handling with automatic cleanup
 
