@@ -772,8 +772,8 @@
                 // Add upload settings
                 const settings = JSON.parse(localStorage.getItem('uploadSettings') || '{}');
                 const formData = new FormData();
-                files.forEach((file, index) => {
-                    formData.append(`file_${index}`, file);
+                files.forEach(file => {
+                    formData.append('files', file);
                 });
                 formData.append('ecc_bytes', settings.eccBytes || 10);
                 formData.append('hw_accel', settings.hwAccel || 'auto');

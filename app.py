@@ -255,7 +255,7 @@ def google_auth():
             'user_id': user_data['id'],
             'email': email,
             'auth_type': 'google',
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
         }, app.config['SECRET_KEY'], algorithm="HS256")
 
         return jsonify({
