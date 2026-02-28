@@ -426,3 +426,53 @@ class YotuDriveEngine:
                 e,
             )
 
+    def _auto_join_parts(self, part_files: List[Path]) -> Path:
+        """
+        Auto-join a sequence of part files (e.g., file.part001.ext, file.part002.ext)
+        into a single output file in the downloads directory.
+        """
+        if not part_files:
+            raise YotuDriveException(
+                "No part files to join", ErrorCodes.DECODING_FAILED
+            )
+
+        part_pattern = re.compile(
+            r"^(?P<root>.+?)\.part(?P<index>\d{3})(?P<ext>\.[^.]*)?$"
+        )
+
+        parsed = []
+        for p in part_files:
+            name = p.name
+            m = part_pattern.match(name)
+            if m:
+                idx = int(m.group("index"))
+                root = m.group("root")
+                ext = m.group("ext") or ""
+            else:
+                idx = None
+                root = None
+                ext = p.suffix
+            parsed.append((p, idx, root, ext))
+
+        # Determine base name and extension
+        roots = [r for _, _, r, _ in parsed if r]
+        base_root = roots[0] if roots else part_files[0].stem
+        exts = [e for _, _, _, e in parsed if e]
+        base_ext = exts[0] if exts else part_files[0].suffix or ".bin"
+
+        # Sort parts by index if available, otherwise by name
+        if all(idx is not None for _, idx, _, _ in parsed):
+            parsed.sort(key=lambda item: item[1])  # type: ignore[index]
+        else:
+            parsed.sort(key=lambda item: item[0].name)
+
+        final_path = Path(self.downloads_dir) / f"{base_root}{base_ext}"
+        ensure_directory_exists(self.downloads_dir)
+
+        with final_path.open("wb") as out_f:
+            for p, _, _, _ in parsed:
+                with p.open("rb") as src_f:
+                    shutil.copyfileobj(src_f, out_f, length=4 * 1024 * 1024)
+
+        return final_path
+
