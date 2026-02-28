@@ -769,20 +769,37 @@
                     body: JSON.stringify({ files: simplifiedFiles })
                 });
 
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
+                // Add upload settings
+                const settings = JSON.parse(localStorage.getItem('uploadSettings') || '{}');
+                const formData = new FormData();
+                files.forEach((file, index) => {
+                    formData.append(`file_${index}`, file);
                 });
+                formData.append('ecc_bytes', settings.eccBytes || 10);
+                formData.append('hw_accel', settings.hwAccel || 'auto');
+                formData.append('compression', settings.compression || 'store');
+                formData.append('split_size', settings.splitSize || 0);
 
-                if (processRes.ok) {
+                try {
+                    const processRes = await fetch(`${API_BASE}/api/upload/process`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+
+                    if (processRes.ok) {
+                        closeModal('loading-modal');
+                        const data = await processRes.json();
+                        const downloadLinks = data.results.map(r => `<a href="${r.video_download_url}" target="_blank" download>Download ${r.filename} Video</a>`).join('<br>');
+                        showStatusModal('success', 'Encoding Complete', `Files encoded to videos:<br>${downloadLinks}`);
+                        showSection('dashboard');
+                        loadDashboardData(); // Refresh the dashboard
+                    } else {
+                        throw new Error('Processing failed');
+                    }
+                } catch (err) {
                     closeModal('loading-modal');
-                    const data = await processRes.json();
-                    const downloadLinks = data.results.map(r => `<a href="${r.video_download_url}" target="_blank" download>Download ${r.filename} Video</a>`).join('<br>');
-                    showStatusModal('success', 'Encoding Complete', `Files encoded to videos:<br>${downloadLinks}`);
-                    showSection('dashboard');
-                    loadDashboardData(); // Refresh the dashboard
-                } else {
-                    throw new Error('Processing failed');
+                    showStatusModal('error', 'Upload Failed', err.message);
                 }
             } catch (err) {
                 closeModal('loading-modal');
