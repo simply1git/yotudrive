@@ -180,6 +180,7 @@ class YotuDriveEngine:
                 ecc_bytes=ecc_bytes,
                 threads=threads,
                 check_cancel=check_cancel,
+                compression=settings.compression,
             )
             # Current Encoder implementation exposes run(); we alias encode() there.
             if hasattr(encoder, "encode"):

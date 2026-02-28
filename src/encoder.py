@@ -65,8 +65,18 @@ def _render_and_save_frame(args):
     return index
 
 class Encoder:
-    def __init__(self, input_file, output_dir, password=None, progress_callback=None, 
-                 block_size=DEFAULT_BLOCK_SIZE, ecc_bytes=DEFAULT_ECC_BYTES, threads=None, check_cancel=None):
+    def __init__(
+        self,
+        input_file,
+        output_dir,
+        password=None,
+        progress_callback=None,
+        block_size=DEFAULT_BLOCK_SIZE,
+        ecc_bytes=DEFAULT_ECC_BYTES,
+        threads=None,
+        check_cancel=None,
+        compression="deflate",
+    ):
         """
         :param input_file: Path to the file to encode.
         :param output_dir: Directory where video frames (PNGs) will be saved.
@@ -76,8 +86,9 @@ class Encoder:
         :param ecc_bytes: Number of Reed-Solomon ECC bytes per 255-byte block.
         :param threads: Number of parallel threads to use.
         :param check_cancel: Function to check for cancellation (should return True or raise Exception).
+        :param compression: Compression mode ('deflate', 'store', etc.).
         """
-        self.input_path = input_path
+        self.input_file = input_file
         self.output_dir = os.path.abspath(output_dir)
         self.ecc_bytes = ecc_bytes
         self.compression = compression
@@ -90,7 +101,7 @@ class Encoder:
 
     def read_file(self):
         """Reads the input file as binary."""
-        with open(self.input_path, 'rb') as f:
+        with open(self.input_file, 'rb') as f:
             return f.read()
     
     def calculate_checksum(self):
@@ -598,6 +609,10 @@ class Encoder:
             self.progress_callback(100)
             
         print("Encoding complete.")
+
+    def encode(self):
+        """Backward-compatible alias for run()."""
+        return self.run()
     def derive_key(self, password, salt):
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
