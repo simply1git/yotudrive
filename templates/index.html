@@ -180,49 +180,49 @@
         }
 
         .light body {
-            background: var(--bg-dark);
-            color: #1e293b;
+            background: var(--bg-dark) !important;
+            color: #1e293b !important;
         }
 
         .light .glass-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            color: #1e293b;
+            background: var(--card-bg) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            color: #1e293b !important;
         }
 
         .light .nav-blur {
-            background: rgba(255, 255, 255, 0.95);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
         }
 
         .light .input-field {
-            background: rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            color: #1e293b;
+            background: rgba(0, 0, 0, 0.05) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            color: #1e293b !important;
         }
 
         .light .input-field:focus {
-            border-color: var(--primary);
-            background: rgba(0, 0, 0, 0.08);
+            border-color: var(--primary) !important;
+            background: rgba(0, 0, 0, 0.08) !important;
         }
 
         .light .text-gray-400 {
-            color: #64748b;
+            color: #64748b !important;
         }
 
         .light .text-gray-500 {
-            color: #94a3b8;
+            color: #94a3b8 !important;
         }
 
         .light .btn-primary {
-            color: white;
+            color: white !important;
         }
 
         .light .gradient-text {
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #f472b6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #f472b6 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
         }
     </style>
 </head>
@@ -939,6 +939,14 @@
             });
 
             // Load upload settings
+            if (!localStorage.getItem('uploadSettings')) {
+                localStorage.setItem('uploadSettings', JSON.stringify({
+                    eccBytes: 10,
+                    hwAccel: 'auto',
+                    compression: 'store',
+                    splitSize: 0
+                }));
+            }
             const uploadSettings = JSON.parse(localStorage.getItem('uploadSettings') || '{}');
             document.getElementById('ecc-bytes').value = uploadSettings.eccBytes || 10;
             document.getElementById('hw-accel').value = uploadSettings.hwAccel || 'auto';
