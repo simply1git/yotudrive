@@ -77,19 +77,20 @@ class Encoder:
         :param threads: Number of parallel threads to use.
         :param check_cancel: Function to check for cancellation (should return True or raise Exception).
         """
-        self.input_file = input_file
+        self.input_path = input_path
         self.output_dir = os.path.abspath(output_dir)
+        self.ecc_bytes = ecc_bytes
+        self.compression = compression
         self.password = password
         self.progress_callback = progress_callback
         self.block_size = block_size
-        self.ecc_bytes = ecc_bytes
         self.threads = threads
         self.check_cancel = check_cancel
-        self.rs_manager = RSManager() # Will be re-initialized in run() with correct ECC settings
+        self.rs_manager = RSManager(ecc_bytes) # Will be re-initialized in run() with correct ECC settings
 
     def read_file(self):
         """Reads the input file as binary."""
-        with open(self.input_file, 'rb') as f:
+        with open(self.input_path, 'rb') as f:
             return f.read()
     
     def calculate_checksum(self):

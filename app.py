@@ -299,6 +299,12 @@ def process_upload(user_id):
         upload_session_id = data.get('upload_session_id')
         files = request.files.getlist('files')
         
+        # Get settings
+        ecc_bytes = int(data.get('ecc_bytes', 10))
+        hw_accel = data.get('hw_accel', 'auto')
+        compression = data.get('compression', 'store')
+        split_size = int(data.get('split_size', 0))
+        
         if not files or all(f.filename == '' for f in files):
             return jsonify({'error': 'No files provided'}), 400
         
@@ -311,42 +317,96 @@ def process_upload(user_id):
                 # Save uploaded file temporarily
                 temp_file = os.path.join(app.config['TEMP_FOLDER'], secure_filename(file.filename))
                 file.save(temp_file)
+                file_size = os.path.getsize(temp_file)
                 
-                # Encode file to frames
-                frames_dir = os.path.join(app.config['TEMP_FOLDER'], str(uuid.uuid4()))
-                os.makedirs(frames_dir, exist_ok=True)
-                
-                encoder = Encoder(temp_file, frames_dir)
-                encoder.encode()
-                
-                # Stitch frames to video
-                video_filename = secure_filename(file.filename).rsplit('.', 1)[0] + '.mp4'
-                video_file = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
-                
-                stitch(frames_dir, video_file)
-                
-                # Add to database
-                db.add_file(
-                    file_name=secure_filename(file.filename),
-                    video_id='',  # Not uploaded to YouTube yet
-                    file_size=os.path.getsize(video_file),
-                    metadata={
-                        'owner_id': user_id,
-                        'upload_session': upload_session_id,
-                        'video_path': video_file,
-                        'original_filename': file.filename,
-                        'processed_at': time.time()
-                    }
-                )
-                
-                results.append({
-                    'filename': file.filename,
-                    'video_download_url': f'/download/{video_filename}'
-                })
-                
-                # Clean up
-                os.remove(temp_file)
-                shutil.rmtree(frames_dir)
+                if split_size > 0 and file_size > split_size * 1024 * 1024:
+                    # Split the file
+                    with open(temp_file, 'rb') as f:
+                        file_bytes = f.read()
+                    chunk_size = split_size * 1024 * 1024
+                    chunks = [file_bytes[i:i+chunk_size] for i in range(0, len(file_bytes), chunk_size)]
+                    
+                    for i, chunk in enumerate(chunks):
+                        chunk_filename = f"{secure_filename(file.filename).rsplit('.', 1)[0]}_part{i+1}.{file.filename.split('.')[-1] if '.' in file.filename else ''}"
+                        temp_chunk = os.path.join(app.config['TEMP_FOLDER'], chunk_filename)
+                        with open(temp_chunk, 'wb') as f:
+                            f.write(chunk)
+                        
+                        # Encode chunk
+                        frames_dir = os.path.join(app.config['TEMP_FOLDER'], str(uuid.uuid4()))
+                        os.makedirs(frames_dir, exist_ok=True)
+                        
+                        encoder = Encoder(temp_chunk, frames_dir, ecc_bytes=ecc_bytes, compression=compression)
+                        encoder.encode()
+                        
+                        video_filename = chunk_filename.rsplit('.', 1)[0] + '.mp4'
+                        video_file = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
+                        
+                        stitch(frames_dir, video_file, hw_accel=hw_accel)
+                        
+                        # Add to database
+                        db.add_file(
+                            file_name=chunk_filename,
+                            video_id='',
+                            file_size=os.path.getsize(video_file),
+                            metadata={
+                                'owner_id': user_id,
+                                'upload_session': upload_session_id,
+                                'video_path': video_file,
+                                'original_filename': chunk_filename,
+                                'processed_at': time.time(),
+                                'part': i+1,
+                                'total_parts': len(chunks)
+                            }
+                        )
+                        
+                        results.append({
+                            'filename': chunk_filename,
+                            'video_download_url': f'/download/{video_filename}'
+                        })
+                        
+                        # Clean up
+                        os.remove(temp_chunk)
+                        shutil.rmtree(frames_dir)
+                    
+                    # Remove original temp_file
+                    os.remove(temp_file)
+                    
+                else:
+                    # Normal encoding
+                    frames_dir = os.path.join(app.config['TEMP_FOLDER'], str(uuid.uuid4()))
+                    os.makedirs(frames_dir, exist_ok=True)
+                    
+                    encoder = Encoder(temp_file, frames_dir, ecc_bytes=ecc_bytes, compression=compression)
+                    encoder.encode()
+                    
+                    video_filename = secure_filename(file.filename).rsplit('.', 1)[0] + '.mp4'
+                    video_file = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
+                    
+                    stitch(frames_dir, video_file, hw_accel=hw_accel)
+                    
+                    # Add to database
+                    db.add_file(
+                        file_name=secure_filename(file.filename),
+                        video_id='',
+                        file_size=os.path.getsize(video_file),
+                        metadata={
+                            'owner_id': user_id,
+                            'upload_session': upload_session_id,
+                            'video_path': video_file,
+                            'original_filename': file.filename,
+                            'processed_at': time.time()
+                        }
+                    )
+                    
+                    results.append({
+                        'filename': file.filename,
+                        'video_download_url': f'/download/{video_filename}'
+                    })
+                    
+                    # Clean up
+                    os.remove(temp_file)
+                    shutil.rmtree(frames_dir)
                 
             except Exception as e:
                 logger.error(f"Error processing file {file.filename}: {e}")

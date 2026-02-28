@@ -50,11 +50,14 @@ def extract_frames(video_path, output_dir, limit=None, check_cancel=None):
     
     return run_ffmpeg(cmd, check_cancel)
 
-def stitch_frames(frames_dir, output_video, framerate=30, encoder="libx264", preset="medium", check_cancel=None):
+def stitch_frames(frames_dir, output_video, framerate=30, encoder="libx264", preset="medium", hw_accel='auto', check_cancel=None):
     """
-    Stitches frames from a directory into a video file with proper naming convention.
+    Stitches PNG frames into a video using FFmpeg.
+    
+    :param frames_dir: Directory containing frame_XXXX.png files.
+    :param output_video: Output video file path.
+    :param hw_accel: Hardware acceleration option ('auto', 'nvenc', 'qsv', 'amf').
     """
-    import subprocess
     ffmpeg_path = get_ffmpeg_path()
     
     # Validate inputs
