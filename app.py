@@ -14,10 +14,8 @@ from functools import wraps
 # Import core YotuDrive modules
 from src.db import FileDatabase
 from src.enhanced_recovery import EnhancedRecoveryManager
-from src.encoder import Encoder
-from src.ffmpeg_utils import stitch_frames as stitch
-from src.youtube import YouTubeStorage as YouTubeManager
-from src.decoder import Decoder
+from src.engine import YotuDriveEngine, EncodeSettings
+from src.google_integration import YotuDriveGoogleIntegration
 
 from werkzeug.utils import secure_filename
 
@@ -46,6 +44,13 @@ for folder in [app.config['UPLOAD_FOLDER'], app.config['TEMP_FOLDER'], app.confi
 # Initialize Core Managers
 db = FileDatabase()
 recovery_manager = EnhancedRecoveryManager()
+engine = YotuDriveEngine(
+    db=db,
+    uploads_dir=app.config['UPLOAD_FOLDER'],
+    temp_dir=app.config['TEMP_FOLDER'],
+    downloads_dir=app.config['DOWNLOAD_FOLDER'],
+)
+google_integration = YotuDriveGoogleIntegration()
 
 # Simple user storage for email login
 USERS_FILE = 'data/users.json'
@@ -302,7 +307,7 @@ def process_upload(user_id):
         # Get settings
         ecc_bytes = int(data.get('ecc_bytes', 10))
         hw_accel = data.get('hw_accel', 'auto')
-        compression = data.get('compression', 'store')
+        compression = data.get('compression', 'deflate')
         split_size = int(data.get('split_size', 0))
         
         if not files or all(f.filename == '' for f in files):
@@ -315,98 +320,38 @@ def process_upload(user_id):
                 
             try:
                 # Save uploaded file temporarily
-                temp_file = os.path.join(app.config['TEMP_FOLDER'], secure_filename(file.filename))
+                temp_file = os.path.join(
+                    app.config['TEMP_FOLDER'], secure_filename(file.filename)
+                )
                 file.save(temp_file)
-                file_size = os.path.getsize(temp_file)
-                
-                if split_size > 0 and file_size > split_size * 1024 * 1024:
-                    # Split the file
-                    with open(temp_file, 'rb') as f:
-                        file_bytes = f.read()
-                    chunk_size = split_size * 1024 * 1024
-                    chunks = [file_bytes[i:i+chunk_size] for i in range(0, len(file_bytes), chunk_size)]
-                    
-                    for i, chunk in enumerate(chunks):
-                        chunk_filename = f"{secure_filename(file.filename).rsplit('.', 1)[0]}_part{i+1}.{file.filename.split('.')[-1] if '.' in file.filename else ''}"
-                        temp_chunk = os.path.join(app.config['TEMP_FOLDER'], chunk_filename)
-                        with open(temp_chunk, 'wb') as f:
-                            f.write(chunk)
-                        
-                        # Encode chunk
-                        frames_dir = os.path.join(app.config['TEMP_FOLDER'], str(uuid.uuid4()))
-                        os.makedirs(frames_dir, exist_ok=True)
-                        
-                        encoder = Encoder(temp_chunk, frames_dir, ecc_bytes=ecc_bytes, compression=compression)
-                        encoder.encode()
-                        
-                        video_filename = chunk_filename.rsplit('.', 1)[0] + '.mp4'
-                        video_file = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
-                        
-                        stitch(frames_dir, video_file, hw_accel=hw_accel)
-                        
-                        # Add to database
-                        db.add_file(
-                            file_name=chunk_filename,
-                            video_id='',
-                            file_size=os.path.getsize(video_file),
-                            metadata={
-                                'owner_id': user_id,
-                                'upload_session': upload_session_id,
-                                'video_path': video_file,
-                                'original_filename': chunk_filename,
-                                'processed_at': time.time(),
-                                'part': i+1,
-                                'total_parts': len(chunks)
-                            }
-                        )
-                        
-                        results.append({
-                            'filename': chunk_filename,
-                            'video_download_url': f'/download/{video_filename}'
-                        })
-                        
-                        # Clean up
-                        os.remove(temp_chunk)
-                        shutil.rmtree(frames_dir)
-                    
-                    # Remove original temp_file
-                    os.remove(temp_file)
-                    
-                else:
-                    # Normal encoding
-                    frames_dir = os.path.join(app.config['TEMP_FOLDER'], str(uuid.uuid4()))
-                    os.makedirs(frames_dir, exist_ok=True)
-                    
-                    encoder = Encoder(temp_file, frames_dir, ecc_bytes=ecc_bytes, compression=compression)
-                    encoder.encode()
-                    
-                    video_filename = secure_filename(file.filename).rsplit('.', 1)[0] + '.mp4'
-                    video_file = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
-                    
-                    stitch(frames_dir, video_file, hw_accel=hw_accel)
-                    
-                    # Add to database
-                    db.add_file(
-                        file_name=secure_filename(file.filename),
-                        video_id='',
-                        file_size=os.path.getsize(video_file),
-                        metadata={
-                            'owner_id': user_id,
-                            'upload_session': upload_session_id,
-                            'video_path': video_file,
-                            'original_filename': file.filename,
-                            'processed_at': time.time()
+
+                encode_settings = EncodeSettings(
+                    password=None,
+                    compression=compression,
+                    ecc_bytes=ecc_bytes,
+                    split_size_mb=split_size,
+                    hw_encoder=hw_accel,
+                )
+
+                encode_result = engine.encode_file(
+                    temp_file,
+                    owner_id=user_id,
+                    upload_session_id=upload_session_id,
+                    settings=encode_settings,
+                )
+
+                for part in encode_result.parts:
+                    video_filename = os.path.basename(part.video_path)
+                    results.append(
+                        {
+                            "filename": part.logical_file_name,
+                            "video_download_url": f"/download/{video_filename}",
                         }
                     )
-                    
-                    results.append({
-                        'filename': file.filename,
-                        'video_download_url': f'/download/{video_filename}'
-                    })
-                    
-                    # Clean up
+
+                # Clean up original temp_file; encoded parts and videos remain
+                if os.path.exists(temp_file):
                     os.remove(temp_file)
-                    shutil.rmtree(frames_dir)
                 
             except Exception as e:
                 logger.error(f"Error processing file {file.filename}: {e}")
@@ -438,37 +383,23 @@ def start_recovery(user_id):
         if 'youtube.com' not in youtube_url and 'youtu.be' not in youtube_url:
             return jsonify({'error': 'Invalid YouTube URL'}), 400
         
-        # Download and extract frames
-        frames_dir = os.path.join(app.config['TEMP_FOLDER'], str(uuid.uuid4()))
-        os.makedirs(frames_dir, exist_ok=True)
-        
         try:
-            youtube_manager = YouTubeManager()
-            if youtube_manager.download(youtube_url, frames_dir):
-                # Decode frames back to file
-                output_filename = f'recovered_{uuid.uuid4().hex}.zip'
-                output_file = os.path.join(app.config['DOWNLOAD_FOLDER'], output_filename)
-                
-                decoder = Decoder(frames_dir, output_file)
-                decoder.run()
-                
-                # Clean up frames
-                shutil.rmtree(frames_dir)
-                
-                return jsonify({
-                    'recovery_id': str(uuid.uuid4()),
-                    'status': 'completed',
-                    'file_download_url': f'/download/{output_filename}'
-                })
-            else:
-                return jsonify({'error': 'Failed to download YouTube video'}), 500
-                
+            # Engine decides whether this is a single video or playlist
+            decode_result = engine.recover_any(youtube_url)
+            output_file = decode_result.output_path
+            output_filename = os.path.basename(output_file)
+
+            return jsonify(
+                {
+                    "recovery_id": str(uuid.uuid4()),
+                    "status": "completed",
+                    "file_download_url": f"/download/{output_filename}",
+                }
+            )
+
         except Exception as e:
             logger.error(f"Recovery processing error: {e}")
-            # Clean up on error
-            if os.path.exists(frames_dir):
-                shutil.rmtree(frames_dir)
-            return jsonify({'error': 'Recovery processing failed'}), 500
+            return jsonify({"error": "Recovery processing failed"}), 500
             
     except Exception as e:
         logger.error(f"Recovery error: {e}")
@@ -501,6 +432,76 @@ def get_files(user_id):
     except Exception as e:
         logger.error(f"Files list error: {e}")
         return jsonify({'error': 'Failed to get files'}), 500
+
+
+@app.route('/api/youtube/upload', methods=['POST'])
+@token_required
+def youtube_upload(user_id):
+    """
+    Optional YouTube Data API upload endpoint.
+    Expects JSON body with:
+    - file_id: ID from FileDatabase
+    - authorization_code: Google OAuth authorization code with YouTube scope
+    """
+    try:
+        data = request.get_json() or {}
+        file_id = data.get('file_id')
+        authorization_code = data.get('authorization_code')
+
+        if not file_id or not authorization_code:
+            return jsonify({'error': 'file_id and authorization_code are required'}), 400
+
+        entry = db.get_file(file_id)
+        if not entry:
+            return jsonify({'error': 'File not found'}), 404
+
+        # Only allow owner to upload
+        metadata = entry.get('metadata', {})
+        owner_id = metadata.get('owner_id')
+        if owner_id and owner_id != user_id:
+            return jsonify({'error': 'Not authorized for this file'}), 403
+
+        video_path = metadata.get('video_path')
+        if not video_path or not os.path.exists(video_path):
+            return jsonify({'error': 'Encoded video not available on server'}), 400
+
+        # Authenticate with Google and get YouTube manager
+        user = google_integration.authenticate_user(authorization_code)
+        yt_manager = google_integration.youtube_manager
+        if yt_manager is None:
+            return jsonify({'error': 'YouTube integration not initialized'}), 500
+
+        upload_meta = {
+            'title': metadata.get('original_filename', entry.get('file_name')),
+            'description': 'YotuDrive encoded storage video',
+            'tags': ['YotuDrive'],
+            'privacy': 'unlisted',
+        }
+
+        upload_result = yt_manager.upload_video(video_path, upload_meta)
+
+        # Update DB entry with YouTube video ID and URL
+        entry['video_id'] = upload_result.get('id')
+        metadata['youtube_url'] = upload_result.get('url')
+        entry['metadata'] = metadata
+        db.data[file_id] = entry
+        db.save()
+
+        return jsonify(
+            {
+                'status': 'uploaded',
+                'video_id': upload_result.get('id'),
+                'video_url': upload_result.get('url'),
+                'google_user': {
+                    'id': getattr(user, 'google_id', None),
+                    'email': getattr(user, 'email', None),
+                    'name': getattr(user, 'name', None),
+                },
+            }
+        )
+    except Exception as e:
+        logger.error(f"YouTube upload error: {e}")
+        return jsonify({'error': 'YouTube upload failed'}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
