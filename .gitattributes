@@ -1,0 +1,12 @@
+* text=auto
+
+# Keep shell-style files in LF
+*.py text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+
+# Windows scripts should stay CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
