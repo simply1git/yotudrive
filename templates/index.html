@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YotuDrive Web</title>
+  <style>
+    :root {
+      --bg: #f6f5ef;
+      --panel: #ffffff;
+      --ink: #1f2a2b;
+      --accent: #1d6e6e;
+      --accent-2: #d97706;
+      --line: #d9d3c7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 20%, #fef3c7 0, transparent 35%),
+        radial-gradient(circle at 85% 15%, #c7f9cc 0, transparent 30%),
+        linear-gradient(180deg, #f8f7f3 0%, #f2f0e8 100%);
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+    }
+    header {
+      padding: 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(6px);
+    }
+    h1 { margin: 0; font-size: 24px; letter-spacing: 0.04em; }
+    main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tabs button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .panel {
+      display: none;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      animation: fadeUp 220ms ease;
+    }
+    .panel.active { display: block; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { margin-bottom: 10px; }
+    label { display: block; font-size: 13px; margin-bottom: 4px; }
+    input, textarea, button, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      font: inherit;
+    }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.warn { background: var(--accent-2); color: #fff; border-color: var(--accent-2); }
+    pre {
+      background: #0f172a;
+      color: #d1fae5;
+      border-radius: 10px;
+      padding: 10px;
+      overflow: auto;
+      min-height: 120px;
+      white-space: pre-wrap;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid var(--line); text-align: left; padding: 8px; font-size: 13px; }
+    .row { display: flex; gap: 8px; }
+    .row > * { flex: 1; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header><h1>YotuDrive Web Console</h1></header>
+  <main>
+    <div class="tabs">
+      <button class="active" data-tab="files">My Files</button>
+      <button data-tab="encode">Encode</button>
+      <button data-tab="decode">Decode</button>
+      <button data-tab="tools">Tools</button>
+      <button data-tab="settings">Settings</button>
+    </div>
+
+    <section id="files" class="panel active">
+      <div class="row">
+        <button class="primary" onclick="loadFiles()">Refresh Files</button>
+      </div>
+      <table id="filesTable"><thead><tr><th>Name</th><th>Video ID</th><th>Size</th><th>Actions</th></tr></thead><tbody></tbody></table>
+    </section>
+
+    <section id="encode" class="panel">
+      <div class="grid">
+        <div>
+          <div class="field"><label>Input File Path</label><input id="encInput" placeholder="E:/path/file.bin"></div>
+          <div class="field"><label>Output Frames Directory</label><input id="encOutput" value="output_frames"></div>
+          <div class="field"><label>Output Video File (for full pipeline)</label><input id="encOutputVideo" value="output.mp4"></div>
+          <div class="field"><label>Password (optional)</label><input id="encPassword" type="password"></div>
+          <button class="primary" onclick="startEncode()">Start Encode Job</button>
+          <button class="warn" onclick="startEncodeVideoPipeline()">Start Encode-to-Video Pipeline</button>
+        </div>
+        <div>
+          <div class="field"><label>Job ID</label><input id="encJobId" readonly></div>
+          <div class="field"><label>Job Status</label><pre id="encStatus"></pre></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="decode" class="panel">
+      <div class="grid">
+        <div>
+          <div class="field"><label>Frames Directory</label><input id="decFrames" placeholder="E:/path/frames"></div>
+          <div class="field"><label>Video File (for decode pipeline)</label><input id="decVideo" placeholder="E:/path/video.mp4"></div>
+          <div class="field"><label>Output File</label><input id="decOutput" placeholder="E:/path/restored.bin"></div>
+          <div class="field"><label>Password (optional)</label><input id="decPassword" type="password"></div>
+          <button class="primary" onclick="startDecode()">Start Decode Job</button>
+          <button class="warn" onclick="startDecodeVideoPipeline()">Start Decode-Video Pipeline</button>
+        </div>
+        <div>
+          <div class="field"><label>Job ID</label><input id="decJobId" readonly></div>
+          <div class="field"><label>Job Status</label><pre id="decStatus"></pre></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tools" class="panel">
+      <div class="grid">
+        <div>
+          <div class="field"><label>Video Path (verify)</label><input id="verifyVideo"></div>
+          <button class="warn" onclick="verifyVideo()">Verify Video</button>
+          <div class="field"><label>Files to auto-join (one path per line)</label><textarea id="joinFiles" rows="6"></textarea></div>
+          <button class="warn" onclick="autoJoin()">Auto-Join</button>
+          <hr>
+          <div class="field"><label>Manual Upload Register: File ID</label><input id="manualFileId"></div>
+          <div class="field"><label>Manual Upload Register: Video ID</label><input id="manualVideoId"></div>
+          <button class="warn" onclick="manualRegister()">Register Manual Upload</button>
+          <hr>
+          <div class="field"><label>OAuth Upload: Video File</label><input id="oauthFilePath"></div>
+          <div class="field"><label>OAuth Upload: Title</label><input id="oauthTitle"></div>
+          <button class="warn" onclick="startOauthUpload()">Start OAuth Upload</button>
+        </div>
+        <div>
+          <div class="field"><label>Tool Output</label><pre id="toolsOut"></pre></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings" class="panel">
+      <div class="grid">
+        <div>
+          <button class="primary" onclick="loadSettings()">Load Settings</button>
+          <div class="field"><label>JSON Settings</label><textarea id="settingsJson" rows="16"></textarea></div>
+          <button class="primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+        <div>
+          <div class="field"><label>Response</label><pre id="settingsOut"></pre></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const tabs = document.querySelectorAll('.tabs button');
+    const panels = document.querySelectorAll('.panel');
+    tabs.forEach(btn => btn.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      panels.forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    }));
+
+    async function api(url, method='GET', body=null) {
+      const res = await fetch(url, {
+        method,
+        headers: {'Content-Type': 'application/json'},
+        body: body ? JSON.stringify(body) : null,
+      });
+      return res.json();
+    }
+
+    async function loadFiles() {
+      const out = await api('/api/files');
+      const tbody = document.querySelector('#filesTable tbody');
+      tbody.innerHTML = '';
+      (out.files || []).forEach(f => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${f.file_name || ''}</td><td>${f.video_id || ''}</td><td>${f.file_size || 0}</td>
+        <td><button onclick="deleteFile('${f.id}')">Delete</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function deleteFile(id) {
+      await api('/api/files/' + id, 'DELETE');
+      loadFiles();
+    }
+
+    async function startEncode() {
+      const payload = {
+        input_file: document.getElementById('encInput').value,
+        output_root: document.getElementById('encOutput').value,
+        password: document.getElementById('encPassword').value || null,
+      };
+      const res = await api('/api/encode/start', 'POST', payload);
+      document.getElementById('encJobId').value = res.job_id || '';
+      pollJob(res.job_id, 'encStatus');
+    }
+
+    async function startDecode() {
+      const payload = {
+        frames_dir: document.getElementById('decFrames').value,
+        output_file: document.getElementById('decOutput').value,
+        password: document.getElementById('decPassword').value || null,
+      };
+      const res = await api('/api/decode/start', 'POST', payload);
+      document.getElementById('decJobId').value = res.job_id || '';
+      pollJob(res.job_id, 'decStatus');
+    }
+
+    async function startDecodeVideoPipeline() {
+      const payload = {
+        video_path: document.getElementById('decVideo').value,
+        output_file: document.getElementById('decOutput').value,
+        password: document.getElementById('decPassword').value || null,
+      };
+      const res = await api('/api/pipeline/decode-video/start', 'POST', payload);
+      document.getElementById('decJobId').value = res.job_id || '';
+      pollJob(res.job_id, 'decStatus');
+    }
+
+    async function startEncodeVideoPipeline() {
+      const payload = {
+        input_file: document.getElementById('encInput').value,
+        output_video: document.getElementById('encOutputVideo').value,
+        password: document.getElementById('encPassword').value || null,
+        verify_roundtrip: true,
+      };
+      const res = await api('/api/pipeline/encode-video/start', 'POST', payload);
+      document.getElementById('encJobId').value = res.job_id || '';
+      pollJob(res.job_id, 'encStatus');
+    }
+
+    async function pollJob(jobId, targetId) {
+      if (!jobId) return;
+      const out = document.getElementById(targetId);
+      const tick = async () => {
+        const j = await api('/api/jobs/' + jobId);
+        out.textContent = JSON.stringify(j, null, 2);
+        const state = (j.job || {}).status;
+        if (state === 'running' || state === 'queued') {
+          setTimeout(tick, 1000);
+        }
+      };
+      tick();
+    }
+
+    async function verifyVideo() {
+      const video = document.getElementById('verifyVideo').value;
+      const res = await api('/api/verify', 'POST', {video_path: video});
+      document.getElementById('toolsOut').textContent = JSON.stringify(res, null, 2);
+    }
+
+    async function autoJoin() {
+      const files = document.getElementById('joinFiles').value
+        .split('\n').map(x => x.trim()).filter(Boolean);
+      const res = await api('/api/tools/auto-join', 'POST', {files});
+      document.getElementById('toolsOut').textContent = JSON.stringify(res, null, 2);
+    }
+
+    async function manualRegister() {
+      const payload = {
+        file_id: document.getElementById('manualFileId').value,
+        video_id: document.getElementById('manualVideoId').value,
+      };
+      const res = await api('/api/upload/manual/register', 'POST', payload);
+      document.getElementById('toolsOut').textContent = JSON.stringify(res, null, 2);
+      loadFiles();
+    }
+
+    async function startOauthUpload() {
+      const payload = {
+        file_path: document.getElementById('oauthFilePath').value,
+        title: document.getElementById('oauthTitle').value,
+      };
+      const res = await api('/api/upload/oauth/start', 'POST', payload);
+      document.getElementById('toolsOut').textContent = JSON.stringify(res, null, 2);
+    }
+
+    async function loadSettings() {
+      const res = await api('/api/settings');
+      document.getElementById('settingsJson').value = JSON.stringify(res, null, 2);
+      document.getElementById('settingsOut').textContent = 'Loaded.';
+    }
+
+    async function saveSettings() {
+      try {
+        const payload = JSON.parse(document.getElementById('settingsJson').value || '{}');
+        const res = await api('/api/settings', 'PUT', payload);
+        document.getElementById('settingsOut').textContent = JSON.stringify(res, null, 2);
+      } catch (err) {
+        document.getElementById('settingsOut').textContent = String(err);
+      }
+    }
+
+    loadFiles();
+  </script>
+</body>
+</html>

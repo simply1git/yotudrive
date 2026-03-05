@@ -1,0 +1,50 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+.venv*/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.spec
+
+# Logs and runtime outputs
+logs/
+output_frames/
+restored_files/
+
+# Local app data and temp processing
+data/frames/
+data/output/
+data/processing/
+data/temp/
+
+# Local binary artifacts generated during manual testing
+*.mp4
+*.zip
+*.bin
+restored_*.txt
+
+# Test temp outputs
+tests/temp_*/
+test_frames/
+test_restore_frames/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Packaging/cache
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Local bootstrap helper
+get-pip.py
