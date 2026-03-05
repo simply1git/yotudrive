@@ -1,0 +1,77 @@
+name: Security Scanning
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * 1"
+  push:
+    branches: ["master"]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+
+      - name: Run dependency vulnerability scan
+        run: |
+          pip-audit -r requirements.txt
+
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate Python syntax
+        run: |
+          python -m compileall -q src app.py
+
+      - name: Install and run Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
+          bandit -r src -f json -o bandit-report.json
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run detect-secrets baseline scan
+        run: |
+          python -m pip install --upgrade pip
+          pip install detect-secrets
+          detect-secrets scan --all-files > .secrets.baseline
+
+      - name: Upload secrets baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: detect-secrets-baseline
+          path: .secrets.baseline

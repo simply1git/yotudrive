@@ -113,6 +113,14 @@ It runs:
 - unit + smoke tests
 - full-cycle integration test (`tests/test_full_cycle.py`)
 
+Security workflow: `.github/workflows/security.yml`
+
+It runs weekly (and on `master` pushes) with:
+
+- dependency vulnerability scan (`pip-audit`)
+- static security scan (`bandit`)
+- repository secrets baseline scan (`detect-secrets`)
+
 ## 🚢 Automated Releases
 
 GitHub Actions release workflow: `.github/workflows/release.yml`
