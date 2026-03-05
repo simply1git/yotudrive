@@ -135,6 +135,12 @@ The workflow will:
 - generate `SHA256SUMS.txt`
 - upload assets to the GitHub Release for that tag
 
+## 📒 Project Operations
+
+- Changelog: `CHANGELOG.md`
+- Release runbook: `docs/release_runbook.md`
+- Issue templates: `.github/ISSUE_TEMPLATE/`
+
 ## 🚀 Quick Start (GUI Mode)
 
 For a user-friendly experience, simply run:

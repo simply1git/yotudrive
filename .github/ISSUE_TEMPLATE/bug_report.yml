@@ -1,0 +1,73 @@
+name: Bug report
+description: Report a defect in YotuDrive behavior
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened and what did you expect?
+      placeholder: Briefly describe the issue.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Example: v1.0.0
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Run mode
+      options:
+        - Desktop EXE (dist/YotuDrive/YotuDrive.exe)
+        - Source (python)
+        - Web API
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: List exact steps to reproduce the issue.
+      placeholder: |
+        1. Open...
+        2. Click...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and traceback
+      description: Paste relevant log lines from logs/ or dist/YotuDrive/logs/.
+    validations:
+      required: true
+
+  - type: textarea
+    id: integrity
+    attributes:
+      label: File integrity details (if decode/restore related)
+      description: Include source/restored SHA256 values if available.
+      placeholder: |
+        source sha256: ...
+        restored sha256: ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS version, Python version (if source mode), and GPU/encoder settings.
+    validations:
+      required: true
