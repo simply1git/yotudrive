@@ -381,7 +381,7 @@ class Decoder:
 
     def verify_checksum(self, data, expected_checksum):
         """Verifies MD5 checksum."""
-        actual_checksum = hashlib.md5(data).digest()
+        actual_checksum = hashlib.md5(data, usedforsecurity=False).digest()
         return actual_checksum == expected_checksum
 
     def parse_header(self, data):
@@ -823,7 +823,7 @@ class Decoder:
             self.process_body_frames_streaming(body_files, detected_block_size, final_output_path, payload_len, flags, salt)
             
             print("Verifying Checksum of restored file...")
-            md5 = hashlib.md5()
+            md5 = hashlib.md5(usedforsecurity=False)
             with open(final_output_path, 'rb') as f:
                 for chunk in iter(lambda: f.read(4096 * 1024), b""):
                     md5.update(chunk)

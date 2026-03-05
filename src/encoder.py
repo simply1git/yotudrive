@@ -103,7 +103,7 @@ class Encoder:
     
     def calculate_checksum(self):
         """Calculates MD5 checksum of the file (streaming)."""
-        md5 = hashlib.md5()
+        md5 = hashlib.md5(usedforsecurity=False)
         with open(self.input_file, 'rb') as f:
             for chunk in iter(lambda: f.read(4096 * 1024), b""):
                 md5.update(chunk)

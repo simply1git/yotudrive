@@ -292,7 +292,7 @@ class Engine:
 
     @staticmethod
     def _file_md5(path: str) -> str:
-        md5 = hashlib.md5()
+        md5 = hashlib.md5(usedforsecurity=False)
         with open(path, "rb") as fh:
             for chunk in iter(lambda: fh.read(4 * 1024 * 1024), b""):
                 md5.update(chunk)
