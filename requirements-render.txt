@@ -1,0 +1,23 @@
+# Core encoding/decoding
+numpy
+Pillow
+imageio-ffmpeg
+tqdm
+yt-dlp
+requests
+cryptography
+reedsolo
+
+# Web API
+flask>=3.0
+flask-cors
+
+# Google OAuth + YouTube API
+google-auth
+google-auth-oauthlib
+google-api-python-client
+
+# Production Server (Render)
+gunicorn==21.2.0
+psycopg2-binary
+python-dotenv
