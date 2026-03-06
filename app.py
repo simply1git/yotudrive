@@ -137,6 +137,8 @@ def _paginate():
 # HEALTH
 # ===========================================================================
 @app.get("/api/health")
+@app.get("/health")
+@app.get("/")
 def health():
     return ok(version=VERSION, status="healthy", timestamp=time.time())
 
