@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/
+*.db
+.pytest_cache/
+
+node_modules/
+.next/
+out/
+dist/
+release/
+build/
+*.log
+.expo/
+.DS_Store

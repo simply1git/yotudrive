@@ -1,0 +1,13 @@
+{
+    "block_size": 4,
+    "ecc_bytes": 32,
+    "threads": 11,
+    "auto_cleanup": true,
+    "encoder": "libx264",
+    "theme": "cosmo",
+    "compression": "Fast (Deflate)",
+    "split_size": "No Split",
+    "user_cap": 25,
+    "job_max_age_days": 30,
+    "job_max_records": 500
+}
