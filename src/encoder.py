@@ -478,9 +478,15 @@ class Encoder:
             _render_and_save_frame((i, header_frame_bits, self.output_dir, self.block_size))
 
         # Parallel Process Body
-        max_workers = max(1, os.cpu_count() - 1)
+        max_workers = max(1, (os.cpu_count() or 2) - 1)
         if hasattr(self, 'threads') and self.threads:
              max_workers = self.threads
+        
+        # Guard for Render OOM
+        if os.environ.get("RENDER") or os.environ.get("RENDER_SERVICE_ID"):
+             if max_workers > 2:
+                 print(f"Render environment detected. Capping workers from {max_workers} to 2 for stability.")
+                 max_workers = 2
              
         print(f"Rendering Body Frames with {max_workers} workers...")
         

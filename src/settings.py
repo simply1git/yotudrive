@@ -8,11 +8,21 @@ import threading
 
 SETTINGS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "settings.json")
 
+# Environment detection
+IS_RENDER = "RENDER" in os.environ or "RENDER_SERVICE_ID" in os.environ
+RENDER_MAX_THREADS = 2
+
+def get_default_threads():
+    count = max(1, (os.cpu_count() or 4) - 1)
+    if IS_RENDER:
+        return min(count, RENDER_MAX_THREADS)
+    return count
+
 DEFAULTS = {
     # Encoding
     "block_size": 2,
     "ecc_bytes": 32,
-    "threads": max(1, (os.cpu_count() or 4) - 1),
+    "threads": get_default_threads(),
     "auto_cleanup": True,
     "encoder": "libx264",
     "theme": "cosmo",
