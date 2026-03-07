@@ -414,7 +414,7 @@ class PGJobStore:
             conn.close()
 
     def submit(self, fn: Callable, job_id: str, *args, **kwargs):
-        cancel_event = threading.Event()
+        cancel_event = kwargs.pop('cancel_event', None) or threading.Event()
         with self._lock:
             self._active_events[job_id] = cancel_event
         self.update_job(job_id, status="running", message="Starting…")

@@ -856,7 +856,7 @@ def encode_start():
         )
         return {"frames_dir": output_dir}
 
-    _jobs().submit(run, job["id"])
+    _jobs().submit(run, job["id"], cancel_event=cancel)
     return ok(job_id=job["id"]), 202
 
 @app.post("/api/decode/start")
@@ -885,7 +885,7 @@ def decode_start():
         )
         return {"output_path": out}
 
-    _jobs().submit(run, job["id"])
+    _jobs().submit(run, job["id"], cancel_event=cancel)
     return ok(job_id=job["id"]), 202
 
 # ===========================================================================
@@ -953,7 +953,7 @@ def pipeline_encode():
             )
         return {"output_video": output_video, "file_id": file_id}
 
-    _jobs().submit(run, job_id)
+    _jobs().submit(run, job_id, cancel_event=cancel)
     return ok(job_id=job_id), 202
 
 @app.post("/api/pipeline/decode-video/start")
@@ -994,7 +994,7 @@ def pipeline_decode():
         except Exception: pass
         return {"output_file": out}
 
-    _jobs().submit(run, job_id)
+    _jobs().submit(run, job_id, cancel_event=cancel)
     return ok(job_id=job_id), 202
 
 # ===========================================================================

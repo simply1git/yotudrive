@@ -160,7 +160,7 @@ class JobStore:
         Submit a callable to the thread pool.
         Auto-sets job status to running/done/failed.
         """
-        cancel_event = threading.Event()
+        cancel_event = kwargs.pop('cancel_event', None) or threading.Event()
         with self._lock:
             self._active_events[job_id] = cancel_event
 
