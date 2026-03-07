@@ -138,4 +138,7 @@ export const adminApi = {
     delete: (jobId: string) => del(`/api/admin/jobs/${jobId}`),
   },
   metrics: () => get('/api/admin/metrics'),
+  system: {
+    logs: () => get('/api/admin/system/logs'),
+  },
 }

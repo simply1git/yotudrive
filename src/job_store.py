@@ -30,7 +30,22 @@ class JobStore:
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="yotu-job")
         os.makedirs(os.path.dirname(path), exist_ok=True)
         self._load()
+        self.recover()
         self.prune()
+
+    def recover(self):
+        """Find 'running' jobs that were interrupted (e.g. server crash) and mark them as failed/interrupted."""
+        with self._lock:
+            modified = False
+            for job in self._data.values():
+                if job.get("status") == "running":
+                    job["status"] = "failed"
+                    job["error"] = "System interrupted (restart detected)"
+                    job["message"] = "Interrupted. Please restart the job manually."
+                    job["updated_at"] = time.time()
+                    modified = True
+            if modified:
+                self._save()
 
     # ------------------------------------------------------------------
     # Persistence

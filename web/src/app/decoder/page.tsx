@@ -2,8 +2,13 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { jobsApi } from '@/lib/api'
-import { Download, Youtube, Play, CheckCircle2 } from 'lucide-react'
+import { 
+  Download, Youtube, Play, CheckCircle2, 
+  Search, FileVideo, HardDrive, 
+  ArrowRight, ShieldCheck, Zap
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function DecoderPage() {
     const router = useRouter()
@@ -18,109 +23,163 @@ export default function DecoderPage() {
         onSuccess: () => router.push('/transfers')
     })
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
+    const handleSubmit = (e?: React.FormEvent) => {
+        e?.preventDefault()
 
         if (inputType === 'local') {
-            if (!pathInput || !outPath) return alert("Required fields missing")
+            if (!pathInput || !outPath) return
             startLocalDecode.mutate({
                 video_path: pathInput.trim(),
                 output_file: outPath.trim()
             })
         } else {
-            alert("YouTube auto-download trigger not fully hooked up in UI yet. Please use local file.")
+            alert("YouTube auto-recovery is in development. Please provide the local video path.")
         }
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <header className="page-header mb-8 text-center pt-8">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6">
-                    <Download size={32} className="text-emerald-400" />
-                </div>
-                <h1 className="page-title text-4xl mb-4">Extract Payload</h1>
-                <p className="page-subtitle text-lg max-w-2xl mx-auto">
-                    Recover your original files from a YotuDrive video archive. Built-in CRC checks and RS error recovery ensure bit-perfect restoration.
-                </p>
+        <div className="max-w-5xl mx-auto pb-20">
+            <header className="page-header mb-12">
+                <h1 className="page-title text-glow flex items-center gap-3">
+                    <Download size={32} className="text-success" />
+                    Decoder
+                </h1>
+                <p className="page-subtitle">Restore your data from video archives with bit-perfect accuracy.</p>
             </header>
 
-            <form onSubmit={handleSubmit} className="card overflow-hidden">
-                <div className="p-8 border-b border-subtle">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Main Card */}
+                <div className="lg:col-span-8">
+                    <div className="card glass-panel overflow-hidden">
+                        <div className="p-1 border-b border-subtle flex">
+                            <button
+                                onClick={() => setInputType('local')}
+                                className={`flex-1 py-4 text-sm font-bold transition-all flex items-center justify-center gap-2 ${inputType === 'local' ? 'text-primary' : 'text-muted'}`}
+                            >
+                                <FileVideo size={16} /> Local File
+                                {inputType === 'local' && <motion.div layoutId="tab" className="absolute bottom-0 h-0.5 bg-success w-1/4" />}
+                            </button>
+                            <button
+                                onClick={() => setInputType('youtube')}
+                                className={`flex-1 py-4 text-sm font-bold transition-all flex items-center justify-center gap-2 ${inputType === 'youtube' ? 'text-primary' : 'text-muted'}`}
+                            >
+                                <Youtube size={16} /> YouTube URL
+                                {inputType === 'youtube' && <motion.div layoutId="tab" className="absolute bottom-0 h-0.5 bg-success w-1/4" />}
+                            </button>
+                        </div>
 
-                    <div className="flex bg-surface rounded-lg p-1 border border-subtle w-fit mb-8 mx-auto">
-                        <button
-                            type="button"
-                            className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${inputType === 'local' ? 'bg-glass text-primary shadow-sm' : 'text-muted hover:text-primary'}`}
-                            onClick={() => setInputType('local')}
-                        >
-                            Local Video File
-                        </button>
-                        <button
-                            type="button"
-                            className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${inputType === 'youtube' ? 'bg-glass text-primary shadow-sm' : 'text-muted hover:text-primary'}`}
-                            onClick={() => setInputType('youtube')}
-                        >
-                            <Youtube size={16} /> YouTube URL
-                        </button>
-                    </div>
+                        <div className="p-10 space-y-8">
+                            <AnimatePresence mode="wait">
+                                {inputType === 'local' ? (
+                                    <motion.div
+                                        key="local"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="space-y-6"
+                                    >
+                                        <div className="input-group">
+                                            <label className="input-label">Video Archive Source</label>
+                                            <div className="relative group">
+                                                <input
+                                                    className="input pl-12 font-mono"
+                                                    placeholder="C:\Downloads\archive_part_1.mp4"
+                                                    value={pathInput}
+                                                    onChange={e => setPathInput(e.target.value)}
+                                                />
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-success transition-colors">
+                                                    <FileVideo size={18} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="youtube"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="space-y-6"
+                                    >
+                                        <div className="input-group">
+                                            <label className="input-label">Archive URL</label>
+                                            <div className="relative group">
+                                                <input
+                                                    className="input pl-12"
+                                                    placeholder="https://youtube.com/watch?v=..."
+                                                    value={ytUrl}
+                                                    onChange={e => setYtUrl(e.target.value)}
+                                                />
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-success transition-colors">
+                                                    <Search size={18} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
-                    <div className="space-y-6 max-w-2xl mx-auto">
-                        {inputType === 'local' ? (
                             <div className="input-group">
-                                <label className="input-label text-center">Video Archive Path</label>
-                                <input
-                                    className="input text-center text-lg py-3 font-mono"
-                                    placeholder="C:\Downloads\archive.mp4"
-                                    value={pathInput}
-                                    onChange={e => setPathInput(e.target.value)}
-                                    required={inputType === 'local'}
-                                />
+                                <label className="input-label">Restoration Target (Destination Path)</label>
+                                <div className="relative group">
+                                    <input
+                                        className="input pl-12 font-mono"
+                                        placeholder="C:\Restored\my_data.zip"
+                                        value={outPath}
+                                        onChange={e => setOutPath(e.target.value)}
+                                    />
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-success transition-colors">
+                                        <HardDrive size={18} />
+                                    </div>
+                                </div>
                             </div>
-                        ) : (
-                            <div className="input-group">
-                                <label className="input-label text-center">YouTube Video URL</label>
-                                <input
-                                    className="input text-center text-lg py-3"
-                                    placeholder="https://youtube.com/watch?v=..."
-                                    value={ytUrl}
-                                    onChange={e => setYtUrl(e.target.value)}
-                                    required={inputType === 'youtube'}
-                                />
+                        </div>
+
+                        <div className="p-6 bg-surface/50 border-t border-subtle flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs text-muted">
+                                <ShieldCheck size={14} className="text-success" />
+                                RS Reconstruction Engine v5.0
                             </div>
-                        )}
-
-                        <div className="h-px bg-border-subtle my-8 w-1/2 mx-auto" />
-
-                        <div className="input-group">
-                            <label className="input-label text-center">Output File Dump Location</label>
-                            <input
-                                className="input text-center text-lg py-3 font-mono"
-                                placeholder="C:\Downloads\restored.zip"
-                                value={outPath}
-                                onChange={e => setOutPath(e.target.value)}
-                                required
-                            />
-                            <p className="text-center text-xs text-muted mt-2">
-                                If the archive name is preserved, the engine will automatically rename it if possible.
-                            </p>
+                            <button
+                                onClick={() => handleSubmit()}
+                                disabled={startLocalDecode.isPending || (!pathInput && !ytUrl) || !outPath}
+                                className="btn btn-primary h-12 px-10 gap-3"
+                                style={{ background: 'var(--success)', color: 'white' }}
+                            >
+                                {startLocalDecode.isPending ? 'Processing...' : 'Start Extraction'}
+                                <Zap size={18} />
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-6 bg-surface/50 flex flex-col sm:flex-row gap-4 justify-between items-center text-center sm:text-left">
-                    <p className="text-sm text-muted flex items-center gap-2">
-                        <CheckCircle2 size={16} className="text-success" /> Multi-core frame extraction enabled.
-                    </p>
-                    <button
-                        type="submit"
-                        className="btn btn-primary px-10 py-3 text-base"
-                        style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)' }}
-                        disabled={startLocalDecode.isPending || (!pathInput && !ytUrl) || !outPath}
-                    >
-                        {startLocalDecode.isPending ? 'Initiating...' : 'Extract Pipeline'} <Play size={18} />
-                    </button>
+                {/* Info Sidebar */}
+                <div className="lg:col-span-4 space-y-6">
+                    <div className="card p-6">
+                        <h3 className="font-bold flex items-center gap-2 mb-4">
+                            <Zap size={18} className="text-success" /> Quality Assurance
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="flex gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center shrink-0">
+                                    <CheckCircle2 size={16} className="text-success" />
+                                </div>
+                                <p className="text-xs text-muted leading-relaxed">
+                                    <span className="text-primary font-bold">SHA-256 Verification:</span> Every byte is checked against its original hash before being written to disk.
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center shrink-0">
+                                    <CheckCircle2 size={16} className="text-success" />
+                                </div>
+                                <p className="text-xs text-muted leading-relaxed">
+                                    <span className="text-primary font-bold">Error Correction:</span> Up to 32 bytes of parity per block allow for pixel-perfect recovery even with compression artifacts.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     )
 }

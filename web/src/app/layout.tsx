@@ -25,7 +25,11 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     <div className="layout">
       <div className="mesh-bg" />
       <Sidebar />
-      <main className="main-content">{children}</main>
+      <main className="main-content">
+        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+          {children}
+        </div>
+      </main>
     </div>
   )
 }

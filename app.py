@@ -593,6 +593,27 @@ def admin_metrics():
         files=file_m,
     )
 
+@app.get("/api/admin/system/logs")
+def admin_system_logs():
+    e = require_admin()
+    if e:
+        return e
+    
+    from src.logger import get_log_file_path
+    log_path = get_log_file_path()
+    
+    if not os.path.exists(log_path):
+        return ok(logs=[], message="Log file not found yet.")
+    
+    try:
+        # Get last 200 lines
+        with open(log_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            logs = lines[-200:] if len(lines) > 200 else lines
+            return ok(logs=[line.strip() for line in logs])
+    except Exception as ex:
+        return err("internal_error", f"Failed to read logs: {ex}", 500)
+
 # ===========================================================================
 # FILES (public/optional-auth)
 # ===========================================================================

@@ -2,16 +2,19 @@
 import { useState, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { jobsApi } from '@/lib/api'
-import { Upload, File, Play, Settings2, CheckCircle2 } from 'lucide-react'
+import { 
+  Upload, File, Play, Settings2, 
+  CheckCircle2, Box, Zap, ArrowRight,
+  Monitor, Cpu, Layers, MousePointer2, ShieldCheck
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function EncoderPage() {
     const router = useRouter()
-    const fileRef = useRef<HTMLInputElement>(null)
-
-    const [file, setFile] = useState<File | null>(null)
-    const [useOauth, setUseOauth] = useState(false)
+    const [pathInput, setPathInput] = useState('')
     const [advanced, setAdvanced] = useState(false)
+    const [isDragging, setIsDragging] = useState(false)
 
     const [overrides, setOverrides] = useState({
         block_size: 2,
@@ -20,12 +23,6 @@ export default function EncoderPage() {
         encoder: 'libx264'
     })
 
-    // Since we are wrapping a python backend that expects a local path for the encoder (not a multipart upload),
-    // in a real Electron desktop app the UI would just pass the absolute filepath.
-    // For the web interface, we assume the backend has local filesystem access or expects an absolute path.
-    // We'll provide a local file path input as a fallback to actual file selection.
-    const [pathInput, setPathInput] = useState('')
-
     const startJob = useMutation({
         mutationFn: (data: any) => jobsApi.pipelineEncodeStart(data),
         onSuccess: () => {
@@ -33,13 +30,11 @@ export default function EncoderPage() {
         }
     })
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!pathInput) return alert("Please specify the absolute path to the input file to encode.")
-
-        // Auto-generate output next to input
+    const handleSubmit = (e?: React.FormEvent) => {
+        e?.preventDefault()
+        if (!pathInput) return
+        
         const outVideo = pathInput + '.encoded.mp4'
-
         startJob.mutate({
             input_file: pathInput.trim(),
             output_video: outVideo,
@@ -48,131 +43,232 @@ export default function EncoderPage() {
         })
     }
 
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault()
+        setIsDragging(true)
+    }
+
+    const handleDragLeave = () => {
+        setIsDragging(false)
+    }
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault()
+        setIsDragging(false)
+        const file = e.dataTransfer.files[0]
+        if (file) {
+            setPathInput(file.name)
+        }
+    }
+
     return (
-        <div className="max-w-4xl mx-auto">
-            <header className="page-header mb-8 text-center pt-8">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto mb-6">
-                    <Upload size={32} className="text-accent" />
+        <div className="max-w-5xl mx-auto pb-20">
+            <header className="page-header mb-12 flex items-end justify-between">
+                <div>
+                    <h1 className="page-title text-glow flex items-center gap-3">
+                        <Upload size={32} className="text-accent" />
+                        Encoder
+                    </h1>
+                    <p className="page-subtitle">Transform data into high-resilience YouTube streams.</p>
                 </div>
-                <h1 className="page-title text-4xl mb-4">New Archive Payload</h1>
-                <p className="page-subtitle text-lg max-w-2xl mx-auto">
-                    Convert any file into a resilient, YouTube-compatible video stream using Reed-Solomon error correction.
-                </p>
-            </header>
-
-            <form onSubmit={handleSubmit} className="card overflow-hidden">
-                <div className="p-8 border-b border-subtle">
-                    <div className="mb-6">
-                        <label className="input-label mb-2">Input File Path (Absolute path on the server/local machine)</label>
-                        <input
-                            className="input text-lg py-3 font-mono"
-                            placeholder="C:\Downloads\my_backup.zip"
-                            value={pathInput}
-                            onChange={e => setPathInput(e.target.value)}
-                            required
-                        />
-                        <p className="text-xs text-muted mt-2">
-                            Note: The web client accesses local backend storage. For pure web uploads, a chunking uploader endpoint would be required.
-                        </p>
-                    </div>
-
-                    <div className="flex bg-surface rounded-lg p-1 border border-subtle w-fit mb-8">
-                        <button
-                            type="button"
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${!advanced ? 'bg-glass text-primary shadow-sm' : 'text-muted hover:text-primary'}`}
-                            onClick={() => setAdvanced(false)}
-                        >
-                            Standard Preset
-                        </button>
-                        <button
-                            type="button"
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${advanced ? 'bg-glass text-primary shadow-sm' : 'text-muted hover:text-primary'}`}
-                            onClick={() => setAdvanced(true)}
-                        >
-                            Advanced Config
-                        </button>
-                    </div>
-
-                    {advanced && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            className="grid-2 bg-surface/50 p-6 rounded-xl border border-subtle mb-8"
-                        >
-                            <div className="input-group">
-                                <label className="input-label">Block Size</label>
-                                <select
-                                    className="input cursor-pointer"
-                                    value={overrides.block_size}
-                                    onChange={e => setOverrides({ ...overrides, block_size: parseInt(e.target.value) })}
-                                >
-                                    <option value={1}>1px (Highest Density)</option>
-                                    <option value={2}>2px (Standard Web)</option>
-                                    <option value={4}>4px (Highest Resilience)</option>
-                                </select>
-                            </div>
-                            <div className="input-group">
-                                <label className="input-label">ECC Bytes (Redundancy)</label>
-                                <input
-                                    type="number" className="input" min={0} max={128}
-                                    value={overrides.ecc_bytes}
-                                    onChange={e => setOverrides({ ...overrides, ecc_bytes: parseInt(e.target.value) })}
-                                />
-                            </div>
-                            <div className="input-group">
-                                <label className="input-label">Worker Threads</label>
-                                <input
-                                    type="number" className="input" min={1} max={32}
-                                    value={overrides.threads}
-                                    onChange={e => setOverrides({ ...overrides, threads: parseInt(e.target.value) })}
-                                />
-                            </div>
-                            <div className="input-group">
-                                <label className="input-label">FFmpeg Video Encoder</label>
-                                <select
-                                    className="input cursor-pointer"
-                                    value={overrides.encoder}
-                                    onChange={e => setOverrides({ ...overrides, encoder: e.target.value })}
-                                >
-                                    <option value="libx264">libx264 (CPU - Default)</option>
-                                    <option value="h264_nvenc">h264_nvenc (NVIDIA)</option>
-                                    <option value="h264_qsv">h264_qsv (Intel)</option>
-                                    <option value="h264_amf">h264_amf (AMD)</option>
-                                </select>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    <label className="flex items-center gap-3 p-4 border border-subtle rounded-xl cursor-pointer hover:border-accent/50 transition-colors bg-surface/30">
-                        <input
-                            type="checkbox"
-                            checked={useOauth}
-                            onChange={e => setUseOauth(e.target.checked)}
-                            className="w-5 h-5 rounded border-subtle text-accent focus:ring-accent"
-                            disabled
-                        />
-                        <div>
-                            <p className="font-medium text-primary flex items-center gap-2">
-                                Auto-upload to YouTube via OAuth <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-accent text-[10px] uppercase font-bold tracking-wider">Coming Soon</span>
-                            </p>
-                            <p className="text-sm text-muted mt-0.5">Automatically stream the encoded payload to your channel as an unlisted video.</p>
-                        </div>
-                    </label>
-                </div>
-
-                <div className="p-6 bg-surface/50 flex justify-between items-center">
-                    <p className="text-sm text-muted flex items-center gap-2">
-                        <CheckCircle2 size={16} className="text-success" /> End-to-end payload checksums enforced.
-                    </p>
-                    <button
-                        type="submit"
-                        className="btn btn-primary px-8 py-3 text-base"
-                        disabled={startJob.isPending || !pathInput}
+                
+                <div className="flex bg-surface rounded-xl p-1 border border-subtle">
+                    <button 
+                        onClick={() => setAdvanced(false)}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${!advanced ? 'bg-glass text-primary shadow-glow' : 'text-muted'}`}
                     >
-                        {startJob.isPending ? 'Starting Engine...' : 'Commence Encoding'} <Play size={18} />
+                        Standard
+                    </button>
+                    <button 
+                        onClick={() => setAdvanced(true)}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${advanced ? 'bg-glass text-primary shadow-glow' : 'text-muted'}`}
+                    >
+                        Advanced
                     </button>
                 </div>
-            </form>
+            </header>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Drop Zone */}
+                <div className="lg:col-span-2 space-y-6">
+                    <motion.div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        animate={{ 
+                            borderColor: isDragging ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                            backgroundColor: isDragging ? 'var(--bg-glass-hover)' : 'var(--bg-glass)',
+                            scale: isDragging ? 1.01 : 1
+                        }}
+                        className="drop-zone relative overflow-hidden group"
+                        style={{ minHeight: '340px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <div className="absolute top-4 right-4 text-xs font-mono text-muted uppercase tracking-widest opacity-30">
+                            V5 Codec Engine
+                        </div>
+                        
+                        <div className={`transition-all duration-500 ${isDragging ? 'scale-110' : 'scale-100'}`}>
+                            <div className="w-20 h-20 rounded-3xl bg-accent-glow flex items-center justify-center mb-6 relative">
+                                <Box size={40} className="text-accent relative z-10" />
+                                <motion.div 
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                                    className="absolute inset-0 border-2 border-dashed border-accent/30 rounded-3xl"
+                                />
+                            </div>
+                        </div>
+
+                        <h3 className="text-xl font-bold font-display mb-2">Drop payload here</h3>
+                        <p className="text-muted text-sm max-w-xs mx-auto mb-8">
+                            Drag any file to begin the Reed-Solomon encoding process.
+                        </p>
+
+                        <div className="w-full max-w-md px-8">
+                            <div className="relative group/input">
+                                <input
+                                    className="input pr-12 text-center font-mono text-sm"
+                                    placeholder="Or paste absolute server path..."
+                                    value={pathInput}
+                                    onChange={e => setPathInput(e.target.value)}
+                                />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted group-focus-within/input:text-accent transition-colors">
+                                    <MousePointer2 size={16} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {isDragging && (
+                            <motion.div 
+                                initial={{ opacity: 0 }} 
+                                animate={{ opacity: 1 }}
+                                className="absolute inset-0 bg-accent/5 backdrop-blur-[2px] pointer-events-none flex items-center justify-center border-2 border-accent border-dashed m-2 rounded-[inherit]"
+                            >
+                                <div className="bg-bg-surface-solid px-6 py-3 rounded-2xl border border-accent shadow-glow flex items-center gap-3">
+                                    <Upload size={20} className="text-accent" />
+                                    <span className="font-bold text-accent">Ready to process</span>
+                                </div>
+                            </motion.div>
+                        )}
+                    </motion.div>
+
+                    <div className="card glass-panel p-6 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center text-success">
+                                <ShieldCheck size={20} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm">Integrity Guaranteed</h4>
+                                <p className="text-xs text-muted">Checksums are verified pre and post-encode.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => handleSubmit()}
+                            disabled={!pathInput || startJob.isPending}
+                            className="btn btn-primary h-12 px-10 group"
+                        >
+                            {startJob.isPending ? 'Working...' : 'Commence'}
+                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Sidebar Config */}
+                <div className="space-y-6">
+                    <AnimatePresence mode="wait">
+                        {advanced ? (
+                            <motion.div
+                                key="advanced"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="card h-full p-6 space-y-6"
+                            >
+                                <h3 className="font-bold font-display flex items-center gap-2">
+                                    <Settings2 size={18} className="text-accent" /> Configuration
+                                </h3>
+                                
+                                <div className="space-y-4">
+                                    <div className="input-group">
+                                        <label className="input-label flex items-center gap-2">
+                                            <Layers size={14} /> Density (Block Size)
+                                        </label>
+                                        <select
+                                            className="input"
+                                            value={overrides.block_size}
+                                            onChange={e => setOverrides({...overrides, block_size: parseInt(e.target.value)})}
+                                        >
+                                            <option value={1}>1px - Ultra (Slow)</option>
+                                            <option value={2}>2px - Standard</option>
+                                            <option value={4}>4px - Resilient</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="input-group">
+                                        <label className="input-label flex items-center gap-2">
+                                            <ShieldCheck size={14} /> RS Parity (Bytes)
+                                        </label>
+                                        <input
+                                            type="number" className="input" min={2} max={128}
+                                            value={overrides.ecc_bytes}
+                                            onChange={e => setOverrides({...overrides, ecc_bytes: parseInt(e.target.value)})}
+                                        />
+                                    </div>
+
+                                    <div className="input-group">
+                                        <label className="input-label flex items-center gap-2">
+                                            <Cpu size={14} /> Parallel Workers
+                                        </label>
+                                        <input
+                                            type="number" className="input" min={1} max={32}
+                                            value={overrides.threads}
+                                            onChange={e => setOverrides({...overrides, threads: parseInt(e.target.value)})}
+                                        />
+                                    </div>
+
+                                    <div className="input-group">
+                                        <label className="input-label flex items-center gap-2">
+                                            <Monitor size={14} /> Video Codec
+                                        </label>
+                                        <select
+                                            className="input"
+                                            value={overrides.encoder}
+                                            onChange={e => setOverrides({...overrides, encoder: e.target.value})}
+                                        >
+                                            <option value="libx264">Software (x264)</option>
+                                            <option value="h264_nvenc">Hardware (NVIDIA)</option>
+                                            <option value="h264_qsv">Hardware (Intel)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="standard"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="card h-full p-6"
+                            >
+                                <div className="text-center py-10">
+                                    <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                                        <Zap size={24} className="text-accent" />
+                                    </div>
+                                    <h4 className="font-bold mb-2">Turbo Mode</h4>
+                                    <p className="text-xs text-muted leading-relaxed">
+                                        Using optimized defaults: 2px blocks, 32-byte parity, and multi-threaded CPU encoding.
+                                    </p>
+                                    <button 
+                                        onClick={() => setAdvanced(true)}
+                                        className="mt-8 text-xs font-bold text-accent hover:underline uppercase tracking-widest"
+                                    >
+                                        Customize parameters
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </div>
         </div>
     )
 }

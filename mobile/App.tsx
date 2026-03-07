@@ -9,22 +9,24 @@ import { authApi, filesApi, jobsApi } from './src/api';
 
 // Theme constants
 const COLORS = {
-  bg: '#050508',
-  surface: '#0d0d14',
-  card: '#13131e',
-  accent1: '#6366f1',
-  accent2: '#8b5cf6',
-  text1: '#f1f0fd',
-  text2: '#a8a5c5',
-  border: 'rgba(255,255,255,0.07)',
+  bg: '#02040a',
+  surface: '#050814',
+  card: '#0a0f1f',
+  accent1: '#4f46e5', // Indigo
+  accent2: '#06b6d4', // Cyan
+  text1: '#f8fafc',
+  text2: '#94a3b8',
+  border: 'rgba(255,255,255,0.06)',
+  borderGlow: 'rgba(79,70,229,0.1)',
   success: '#10b981',
-  error: '#ef4444'
+  error: '#f87171',
+  warning: '#fbbf24',
 };
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [tab, setTab] = useState('library'); // 'library', 'jobs', 'profile'
+  const [tab, setTab] = useState('library'); 
 
   useEffect(() => {
     authApi.getSession().then(res => {
@@ -33,7 +35,11 @@ export default function App() {
     }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator color={COLORS.accent1} /></View>
+  if (loading) return (
+    <View style={[styles.container, styles.center]}>
+      <ActivityIndicator color={COLORS.accent2} size="large" />
+    </View>
+  );
 
   if (!user) return <LoginScreen onLogin={setUser} />
 
@@ -42,8 +48,13 @@ export default function App() {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>YotuDrive</Text>
-        <Ionicons name="flash-outline" size={24} color={COLORS.accent1} />
+        <View style={styles.headerTitleGroup}>
+           <Text style={styles.headerTitle}>YOTU</Text>
+           <Text style={[styles.headerTitle, { color: COLORS.accent2 }]}>DRIVE</Text>
+        </View>
+        <TouchableOpacity style={styles.headerIcon}>
+           <Ionicons name="notifications-outline" size={20} color={COLORS.text2} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
@@ -52,11 +63,11 @@ export default function App() {
         {tab === 'profile' && <ProfileScreen user={user} onLogout={() => setUser(null)} />}
       </View>
 
-      {/* Custom Tab Bar */}
+      {/* Glass Tab Bar */}
       <View style={styles.tabBar}>
-        <TabButton icon="folder-outline" label="Library" active={tab === 'library'} onPress={() => setTab('library')} />
-        <TabButton icon="pulse-outline" label="Transfers" active={tab === 'jobs'} onPress={() => setTab('jobs')} />
-        <TabButton icon="person-outline" label="Profile" active={tab === 'profile'} onPress={() => setTab('profile')} />
+        <TabButton icon="grid-outline" label="Vault" active={tab === 'library'} onPress={() => setTab('library')} />
+        <TabButton icon="swap-horizontal-outline" label="Transfers" active={tab === 'jobs'} onPress={() => setTab('jobs')} />
+        <TabButton icon="finger-print-outline" label="Account" active={tab === 'profile'} onPress={() => setTab('profile')} />
       </View>
     </SafeAreaView>
   );
@@ -70,39 +81,55 @@ function LoginScreen({ onLogin }: { onLogin: (u: any) => void }) {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!email) return;
     setLoading(true);
     try {
       const res = await authApi.devLogin(email);
       onLogin(res.user);
     } catch (e: any) {
-      alert('Login failed: ' + (e.response?.data?.error?.message || e.message));
+      alert('Authentication failure: ' + (e.response?.data?.error?.message || e.message));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, styles.center]}>
+    <View style={[styles.container, styles.center, { padding: 30 }]}>
+      <View style={styles.loginGlow} />
       <View style={styles.card}>
-        <Ionicons name="flash" size={48} color={COLORS.accent1} style={{ alignSelf: 'center', marginBottom: 20 }} />
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Enter your development email to connect.</Text>
+        <View style={styles.iconCircle}>
+           <Ionicons name="flash" size={32} color={COLORS.accent2} />
+        </View>
+        <Text style={styles.title}>Cosmos Uplink</Text>
+        <Text style={styles.subtitle}>Enter credentials to establish secure connection.</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="admin@test.yotu"
-          placeholderTextColor={COLORS.text2}
+          placeholder="identity@yotudrive.com"
+          placeholderTextColor="rgba(148,163,184,0.4)"
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Authenticate via API</Text>}
+        <TouchableOpacity 
+          style={[styles.button, !email && { opacity: 0.5 }]} 
+          onPress={handleLogin} 
+          disabled={loading || !email}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={styles.buttonText}>Engage Portal</Text>
+              <Ionicons name="arrow-forward" size={18} color="#fff" />
+            </View>
+          )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+      <Text style={[styles.emptyText, { marginTop: 40 }]}>SYSTEM v2.0 • ENCRYPTED</Text>
+    </View>
   );
 }
 
@@ -114,22 +141,25 @@ function LibraryScreen() {
     filesApi.list().then(res => { setFiles(res.files); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator color={COLORS.accent1} /></View>
+  if (loading) return <View style={styles.center}><ActivityIndicator color={COLORS.accent2} /></View>
 
   return (
     <FlatList
       data={files}
       keyExtractor={(item: any) => item.id}
-      contentContainerStyle={{ padding: 16 }}
-      ListEmptyComponent={<Text style={styles.emptyText}>No files archived yet.</Text>}
+      contentContainerStyle={{ padding: 20 }}
+      ListEmptyComponent={<Text style={styles.emptyText}>Vault is empty. Synchronize files from workstation.</Text>}
       renderItem={({ item }) => (
-        <View style={styles.listItem}>
-          <Ionicons name="videocam-outline" size={32} color={COLORS.text2} />
+        <TouchableOpacity style={styles.listItem}>
+          <View style={[styles.listIcon, { backgroundColor: 'rgba(6,182,212,0.1)' }]}>
+             <Ionicons name="document-text-outline" size={24} color={COLORS.accent2} />
+          </View>
           <View style={{ marginLeft: 16, flex: 1 }}>
             <Text style={styles.listTitle} numberOfLines={1}>{item.file_name}</Text>
-            <Text style={styles.listSubtitle}>{item.video_id === 'pending' ? 'Processing...' : item.video_id}</Text>
+            <Text style={styles.listSubtitle}>{item.video_id === 'pending' ? 'Indexing...' : item.video_id}</Text>
           </View>
-        </View>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.border} />
+        </TouchableOpacity>
       )}
     />
   );
@@ -146,20 +176,32 @@ function JobsScreen() {
     return () => clearInterval(int);
   }, []);
 
-  if (loading) return <View style={styles.center}><ActivityIndicator color={COLORS.accent1} /></View>
+  if (loading) return <View style={styles.center}><ActivityIndicator color={COLORS.accent2} /></View>
 
   return (
     <FlatList
       data={jobs}
       keyExtractor={(item: any) => item.id}
-      contentContainerStyle={{ padding: 16 }}
-      ListEmptyComponent={<Text style={styles.emptyText}>No active pipelines.</Text>}
+      contentContainerStyle={{ padding: 20 }}
+      ListEmptyComponent={<Text style={styles.emptyText}>No active transmissions.</Text>}
       renderItem={({ item }) => (
         <View style={styles.listItem}>
-          <Ionicons name={item.status === 'done' ? "checkmark-circle" : "pulse"} size={32} color={item.status === 'done' ? COLORS.success : COLORS.accent1} />
+          <View style={styles.listIcon}>
+             <Ionicons 
+               name={item.status === 'done' ? "shield-checkmark" : item.status === 'failed' ? "alert-circle" : "sync"} 
+               size={24} 
+               color={item.status === 'done' ? COLORS.success : item.status === 'failed' ? COLORS.error : COLORS.accent1} 
+             />
+          </View>
           <View style={{ marginLeft: 16, flex: 1 }}>
-            <Text style={styles.listTitle} numberOfLines={1}>{item.kind} • {item.progress}%</Text>
-            <Text style={styles.listSubtitle}>{item.message}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+               <Text style={styles.listTitle} numberOfLines={1}>{item.kind.replace('_', ' ').toUpperCase()}</Text>
+               <Text style={[styles.listTitle, { fontSize: 13, color: COLORS.accent1 }]}>{item.progress}%</Text>
+            </View>
+            <View style={styles.progressBarBg}>
+               <View style={[styles.progressBar, { width: `${item.progress}%`, backgroundColor: item.status === 'done' ? COLORS.success : COLORS.accent1 }]} />
+            </View>
+            <Text style={styles.listSubtitle} numberOfLines={1}>{item.message}</Text>
           </View>
         </View>
       )}
@@ -169,16 +211,35 @@ function JobsScreen() {
 
 function ProfileScreen({ user, onLogout }: { user: any, onLogout: () => void }) {
   return (
-    <View style={[styles.center, { padding: 20 }]}>
-      <Ionicons name="person-circle-outline" size={80} color={COLORS.accent1} />
-      <Text style={[styles.title, { marginTop: 20 }]}>{user.email}</Text>
-      <Text style={styles.badge}>{user.role.toUpperCase()}</Text>
+    <View style={[styles.center, { padding: 30 }]}>
+      <View style={styles.profileGlow} />
+      <View style={[styles.iconCircle, { width: 100, height: 100, borderRadius: 50, marginBottom: 20, borderColor: COLORS.accent1 }]}>
+         <Ionicons name="person" size={50} color={COLORS.accent1} />
+      </View>
+      <Text style={styles.title}>{user.email}</Text>
+      <View style={[styles.badge, { backgroundColor: COLORS.accent1 + '20' }]}>
+         <Text style={[styles.badgeText, { color: COLORS.accent1 }]}>{user.role.toUpperCase()}</Text>
+      </View>
 
-      <TouchableOpacity style={[styles.button, { marginTop: 40, backgroundColor: 'transparent', borderColor: COLORS.border, borderWidth: 1 }]} onPress={async () => {
-        await authApi.logout();
-        onLogout();
-      }}>
-        <Text style={[styles.buttonText, { color: COLORS.error }]}>Disconnect Session</Text>
+      <View style={styles.profileMeta}>
+         <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>System Access</Text>
+            <Text style={[styles.metaValue, { color: COLORS.success }]}>Authorized</Text>
+         </View>
+         <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>Encryption</Text>
+            <Text style={styles.metaValue}>AES-256</Text>
+         </View>
+      </View>
+
+      <TouchableOpacity 
+        style={[styles.button, { marginTop: 40, backgroundColor: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.2)', borderWidth: 1 }]} 
+        onPress={async () => {
+          await authApi.logout();
+          onLogout();
+        }}
+      >
+        <Text style={[styles.buttonText, { color: COLORS.error }]}>Terminate Connection</Text>
       </TouchableOpacity>
     </View>
   );
@@ -190,8 +251,8 @@ function ProfileScreen({ user, onLogout }: { user: any, onLogout: () => void }) 
 function TabButton({ icon, label, active, onPress }: any) {
   return (
     <TouchableOpacity style={styles.tabBtn} onPress={onPress}>
-      <Ionicons name={icon} size={24} color={active ? COLORS.accent1 : COLORS.text2} />
-      <Text style={[styles.tabLabel, { color: active ? COLORS.accent1 : COLORS.text2 }]}>{label}</Text>
+      <Ionicons name={icon} size={22} color={active ? COLORS.accent2 : COLORS.text2} />
+      <Text style={[styles.tabLabel, { color: active ? COLORS.accent2 : COLORS.text2, fontWeight: active ? '700' : '500' }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -199,24 +260,44 @@ function TabButton({ icon, label, active, onPress }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderColor: COLORS.border },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: COLORS.text1, letterSpacing: -0.5 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 20, paddingBottom: 20 },
+  headerTitleGroup: { flexDirection: 'row', alignItems: 'center' },
+  headerTitle: { fontSize: 20, fontWeight: '900', color: COLORS.text1, letterSpacing: 2 },
+  headerIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: COLORS.surface, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
   content: { flex: 1 },
+  
   // Login card
-  card: { width: '85%', backgroundColor: COLORS.card, padding: 24, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border },
-  title: { fontSize: 22, fontWeight: 'bold', color: COLORS.text1, textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 14, color: COLORS.text2, textAlign: 'center', marginBottom: 24 },
-  input: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 14, color: COLORS.text1, fontSize: 16, marginBottom: 16, borderWidth: 1, borderColor: COLORS.border },
-  button: { backgroundColor: COLORS.accent1, borderRadius: 10, padding: 16, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  card: { width: '100%', backgroundColor: COLORS.card, padding: 30, borderRadius: 32, borderWidth: 1, borderColor: COLORS.border, shadowColor: COLORS.accent1, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
+  loginGlow: { position: 'absolute', top: '20%', width: 300, height: 300, backgroundColor: COLORS.accent1, borderRadius: 150, opacity: 0.05, transform: [{ scale: 2 }] },
+  iconCircle: { width: 64, height: 64, borderRadius: 24, backgroundColor: COLORS.surface, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: 24, borderWidth: 1, borderColor: COLORS.border },
+  title: { fontSize: 26, fontWeight: '800', color: COLORS.text1, textAlign: 'center', marginBottom: 10, letterSpacing: -0.5 },
+  subtitle: { fontSize: 14, color: COLORS.text2, textAlign: 'center', marginBottom: 30, lineHeight: 20 },
+  input: { backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 18, color: COLORS.text1, fontSize: 16, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border },
+  button: { backgroundColor: COLORS.accent1, borderRadius: 16, padding: 18, alignItems: 'center', shadowColor: COLORS.accent1, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  
   // Tab Bar
-  tabBar: { flexDirection: 'row', backgroundColor: COLORS.surface, borderTopWidth: 1, borderColor: COLORS.border, paddingBottom: Platform.OS === 'ios' ? 20 : 0 },
-  tabBtn: { flex: 1, padding: 12, alignItems: 'center' },
-  tabLabel: { fontSize: 12, marginTop: 4, fontWeight: '500' },
+  tabBar: { flexDirection: 'row', backgroundColor: COLORS.surface, borderTopWidth: 1, borderColor: COLORS.border, paddingBottom: Platform.OS === 'ios' ? 30 : 10, paddingTop: 10 },
+  tabBtn: { flex: 1, alignItems: 'center', gap: 4 },
+  tabLabel: { fontSize: 10, textTransform: 'uppercase', tracking: 1 },
+  
   // List
-  listItem: { flexDirection: 'row', backgroundColor: COLORS.card, padding: 16, borderRadius: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
-  listTitle: { color: COLORS.text1, fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  listSubtitle: { color: COLORS.text2, fontSize: 13 },
-  emptyText: { color: COLORS.text2, textAlign: 'center', marginTop: 40, fontSize: 15 },
-  badge: { backgroundColor: 'rgba(99,102,241,0.15)', color: COLORS.accent1, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 100, fontSize: 12, fontWeight: 'bold', overflow: 'hidden', marginTop: 12 }
+  listItem: { flexDirection: 'row', backgroundColor: COLORS.card, padding: 16, borderRadius: 24, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
+  listIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: COLORS.surface, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  listTitle: { color: COLORS.text1, fontSize: 15, fontWeight: '700', marginBottom: 2 },
+  listSubtitle: { color: COLORS.text2, fontSize: 12, opacity: 0.7 },
+  emptyText: { color: COLORS.text2, textAlign: 'center', marginTop: 60, fontSize: 14, fontWeight: '600', opacity: 0.5, letterSpacing: 1 },
+  
+  // Profile
+  profileGlow: { position: 'absolute', top: '10%', width: 200, height: 200, backgroundColor: COLORS.accent1, borderRadius: 100, opacity: 0.1, transform: [{ scale: 3 }] },
+  badge: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 100, marginTop: 12 },
+  badgeText: { fontSize: 10, fontWeight: '900', letterSpacing: 2 },
+  profileMeta: { width: '100%', marginTop: 40, gap: 12 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, backgroundColor: COLORS.surface, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border },
+  metaLabel: { color: COLORS.text2, fontSize: 14, fontWeight: '600' },
+  metaValue: { color: COLORS.text1, fontSize: 14, fontWeight: '700' },
+  
+  // Progress
+  progressBarBg: { height: 4, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2, marginVertical: 8, overflow: 'hidden' },
+  progressBar: { height: '100%', borderRadius: 2 }
 });

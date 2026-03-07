@@ -55,7 +55,7 @@ function createWindow() {
         width: 1280,
         height: 800,
         titleBarStyle: 'hiddenInset',
-        backgroundColor: '#050508',
+        backgroundColor: '#02040a',
         show: false, // Hide until Flask is ready
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
