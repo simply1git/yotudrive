@@ -5,7 +5,7 @@ import { settingsApi, getToken, API_BASE } from '@/lib/api'
 import { 
   Settings, Save, Server, SlidersHorizontal, 
   Cpu, Monitor, Zap, ShieldCheck, 
-  Trash2, Database, Info
+  Trash2, Database, Info, Copy, Check
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -18,10 +18,17 @@ export default function SettingsPage() {
     const [form, setForm] = useState<Record<string, any>>({})
     const [successMsg, setSuccessMsg] = useState('')
     const [token, setTokenState] = useState('')
+    const [copiedField, setCopiedField] = useState<string | null>(null)
 
     useEffect(() => {
         setTokenState(getToken() || '')
     }, [])
+
+    const copyToClipboard = (text: string, field: string) => {
+        navigator.clipboard.writeText(text)
+        setCopiedField(field)
+        setTimeout(() => setCopiedField(null), 2000)
+    }
 
     useEffect(() => {
         if (data?.settings) setForm(data.settings)
@@ -144,8 +151,8 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Status Sidebar */}
-                <div className="lg:col-span-4 space-y-6">
-                    <div className="card p-8 bg-accent-glow border-accent/20">
+                <div className="lg:col-span-4 space-y-8">
+                    <div className="card p-6 bg-accent-glow border-accent/20">
                         <div className="flex items-center gap-3 mb-6">
                             <Database size={24} className="text-accent" />
                             <h3 className="font-bold font-display">Engine State</h3>
@@ -191,32 +198,50 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
-                    <div className="card p-6 border-accent/20 bg-accent/5">
-                        <div className="flex items-center gap-3 mb-4">
-                            <Zap size={20} className="text-accent" />
-                            <h3 className="font-bold text-sm">Nebula Worker Config</h3>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-muted uppercase tracking-wider">API URL</label>
-                                <div className="p-2 bg-surface/50 rounded-lg border border-subtle font-mono text-[10px] break-all">
-                                    {API_BASE}
-                                </div>
+                    <div className="card p-6 border-accent/20 bg-accent/5 overflow-hidden">
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent">
+                                <Zap size={16} />
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Worker Token</label>
-                                <div className="p-2 bg-surface/50 rounded-lg border border-subtle font-mono text-[10px] break-all relative group/tok">
-                                    {token ? `${token.substring(0, 12)}...${token.substring(token.length - 8)}` : 'Empty'}
+                            <h3 className="font-bold text-sm tracking-tight text-accent">Nebula Worker Config</h3>
+                        </div>
+                        
+                        <div className="space-y-5">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">Orchestrator URL</label>
+                                <div className="group relative">
+                                    <div className="p-3 bg-surface/40 rounded-xl border border-subtle font-mono text-[11px] leading-tight break-all pr-10">
+                                        {API_BASE}
+                                    </div>
                                     <button 
                                         type="button"
-                                        onClick={() => {navigator.clipboard.writeText(token); setSuccessMsg('Token copied!')}}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-accent opacity-0 group-hover/tok:opacity-100 transition-opacity"
+                                        onClick={() => copyToClipboard(API_BASE, 'url')}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent/10 text-accent transition-all"
                                     >
-                                        Copy
+                                        {copiedField === 'url' ? <Check size={14} /> : <Copy size={14} />}
                                     </button>
                                 </div>
                             </div>
-                            <p className="text-[9px] text-muted">Use these values in your Google Colab script to link your remote worker.</p>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">Access Token</label>
+                                <div className="group relative">
+                                    <div className="p-3 bg-surface/40 rounded-xl border border-subtle font-mono text-[11px] leading-tight pr-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                                        {token || 'No session token'}
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={() => copyToClipboard(token, 'token')}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent/10 text-accent transition-all"
+                                    >
+                                        {copiedField === 'token' ? <Check size={14} /> : <Copy size={14} />}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <p className="text-[10px] text-muted italic leading-relaxed px-1">
+                                Paste these into your Nebula script on Colab to authorize your remote worker.
+                            </p>
                         </div>
                     </div>
                 </div>
