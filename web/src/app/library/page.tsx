@@ -22,7 +22,13 @@ export default function LibraryPage() {
 
     const delMutation = useMutation({
         mutationFn: (id: string) => filesApi.delete(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['files'] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['files'] })
+        },
+        onError: (err: any) => {
+            console.error('Delete failed:', err)
+            alert('Purge failed. Station core reported an error.')
+        }
     })
 
     function bytesToSize(bytes: number) {
@@ -42,7 +48,7 @@ export default function LibraryPage() {
 
     return (
         <div>
-            <header className="page-header flex items-center justify-between mb-8">
+            <header className="page-header flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
                 <div>
                     <h1 className="page-title text-glow">
                         <Zap size={28} className="inline mr-3 text-accent" />
@@ -51,13 +57,13 @@ export default function LibraryPage() {
                     <p className="page-subtitle">Your space-time file library.</p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="relative">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="relative flex-1 md:flex-none">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
                         <input
                             type="text"
                             placeholder="Search archives..."
-                            className="input pl-10 w-64"
+                            className="input pl-10 w-full md:w-64"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />

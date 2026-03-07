@@ -102,7 +102,7 @@ export default function TransfersPage() {
     const queryClient = useQueryClient()
     
     // Polling every 2s
-    const { data, isLoading } = useQuery({
+    const { data, isLoading, isError } = useQuery({
         queryKey: ['jobs'],
         queryFn: () => jobsApi.list({ limit: 50 }),
         refetchInterval: 2000
@@ -112,6 +112,10 @@ export default function TransfersPage() {
         mutationFn: () => jobsApi.clear(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        },
+        onError: (err: any) => {
+            console.error('Clear failed:', err)
+            alert('Cosmic Cleanup failed. Try again later.')
         }
     })
 
@@ -120,7 +124,7 @@ export default function TransfersPage() {
 
     return (
         <div className="max-w-5xl mx-auto px-4">
-            <header className="page-header mb-8 flex items-end justify-between">
+            <header className="page-header mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                     <h1 className="page-title"><Activity size={28} className="inline mr-3 text-accent" />Transfers & Jobs</h1>
                     <p className="page-subtitle">Live monitoring of your cosmic data pipelines.</p>
@@ -129,13 +133,22 @@ export default function TransfersPage() {
                     <button
                         onClick={() => clearMutation.mutate()}
                         disabled={clearMutation.isPending}
-                        className="btn-glass px-4 py-2 text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-red-500/20 hover:text-red-300 transition-all border border-red-500/30 text-red-400 disabled:opacity-50"
+                        className="btn-glass px-4 py-2 text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-red-500/20 hover:text-red-300 transition-all border border-red-500/30 text-red-400 disabled:opacity-50 self-start md:self-auto shrink-0"
                     >
                         {clearMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                         Clear Completed
                     </button>
                 )}
             </header>
+
+            {isError && (
+                <div className="card p-4 border-red-500/20 bg-red-500/5 mb-6">
+                    <div className="flex items-center gap-3 text-red-400">
+                        <XCircle size={18} />
+                        <p className="text-xs font-bold uppercase tracking-widest">Station Link Severed</p>
+                    </div>
+                </div>
+            )}
 
             {isLoading && jobs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 opacity-50">

@@ -33,6 +33,11 @@ export default function EncoderPage() {
         mutationFn: (data: any) => jobsApi.pipelineEncodeStart(data),
         onSuccess: () => {
             router.push('/transfers')
+        },
+        onError: (err: any) => {
+            console.error('Start job error:', err)
+            const msg = err.response?.data?.error?.message || 'Failed to initiate job. Check your connection.'
+            alert(`Station Error: ${msg}`)
         }
     })
 
@@ -98,7 +103,7 @@ export default function EncoderPage() {
                 className="hidden" 
                 onChange={handleFileSelect}
             />
-            <header className="page-header mb-12 flex items-end justify-between">
+            <header className="page-header mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                     <h1 className="page-title text-glow flex items-center gap-3">
                         <Upload size={32} className="text-accent" />
@@ -107,7 +112,7 @@ export default function EncoderPage() {
                     <p className="page-subtitle">Transform data into high-resilience YouTube streams.</p>
                 </div>
                 
-                <div className="flex bg-surface rounded-xl p-1 border border-subtle overflow-hidden">
+                <div className="flex bg-surface rounded-xl p-1 border border-subtle overflow-hidden self-start md:self-auto">
                     <button 
                         onClick={() => setMode('standard')}
                         className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${mode === 'standard' ? 'bg-glass text-primary shadow-glow' : 'text-muted hover:text-primary'}`}

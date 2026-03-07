@@ -40,6 +40,10 @@ export default function SettingsPage() {
             setSuccessMsg('Hyper-parameters synchronized.')
             setTimeout(() => setSuccessMsg(''), 3000)
             refetch()
+        },
+        onError: (err: any) => {
+            console.error('Settings save failed:', err)
+            alert('Failed to apply system changes. Station core rejected the update.')
         }
     })
 
@@ -52,7 +56,7 @@ export default function SettingsPage() {
 
     return (
         <div className="max-w-5xl mx-auto pb-20">
-            <header className="page-header mb-12 flex justify-between items-end">
+            <header className="page-header mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                     <h1 className="page-title text-glow flex items-center gap-3">
                         <Settings size={32} className="text-accent" />
@@ -210,13 +214,13 @@ export default function SettingsPage() {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">Orchestrator URL</label>
                                 <div className="group relative">
-                                    <div className="p-3 bg-surface/40 rounded-xl border border-subtle font-mono text-[11px] leading-tight break-all pr-10">
+                                    <div className="p-3 bg-surface/40 rounded-xl border border-subtle font-mono text-[11px] leading-relaxed break-all pr-10 min-h-[44px]">
                                         {API_BASE}
                                     </div>
                                     <button 
                                         type="button"
                                         onClick={() => copyToClipboard(API_BASE, 'url')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent/10 text-accent transition-all"
+                                        className="absolute right-2 top-2 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent/10 text-accent transition-all"
                                     >
                                         {copiedField === 'url' ? <Check size={14} /> : <Copy size={14} />}
                                     </button>
@@ -226,13 +230,13 @@ export default function SettingsPage() {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">Access Token</label>
                                 <div className="group relative">
-                                    <div className="p-3 bg-surface/40 rounded-xl border border-subtle font-mono text-[11px] leading-tight pr-10 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    <div className="p-3 bg-surface/40 rounded-xl border border-subtle font-mono text-[11px] leading-tight pr-10 overflow-hidden text-ellipsis whitespace-nowrap min-h-[44px] flex items-center">
                                         {token || 'No session token'}
                                     </div>
                                     <button 
                                         type="button"
                                         onClick={() => copyToClipboard(token, 'token')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent/10 text-accent transition-all"
+                                        className="absolute right-2 top-2 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent/10 text-accent transition-all"
                                     >
                                         {copiedField === 'token' ? <Check size={14} /> : <Copy size={14} />}
                                     </button>
