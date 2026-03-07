@@ -138,7 +138,13 @@ function LibraryScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    filesApi.list().then(res => { setFiles(res.files); setLoading(false); }).catch(() => setLoading(false));
+    filesApi.list()
+      .then(res => { setFiles(res.files); setLoading(false); })
+      .catch((e) => { 
+        setLoading(false);
+        const msg = e.response?.data?.error?.message || e.message;
+        alert('Vault Sync Failed: ' + msg);
+      });
   }, []);
 
   if (loading) return <View style={styles.center}><ActivityIndicator color={COLORS.accent2} /></View>
@@ -170,9 +176,19 @@ function JobsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchJobs = () => jobsApi.list().then(res => { setJobs(res.jobs); setLoading(false); }).catch(() => setLoading(false));
+    let alerted = false;
+    const fetchJobs = () => jobsApi.list()
+      .then(res => { setJobs(res.jobs); setLoading(false); })
+      .catch((e) => { 
+        setLoading(false);
+        if (!alerted) {
+          const msg = e.response?.data?.error?.message || e.message;
+          alert('Transmission Monitoring Failed: ' + msg);
+          alerted = true;
+        }
+      });
     fetchJobs();
-    const int = setInterval(fetchJobs, 3000);
+    const int = setInterval(fetchJobs, 5000); // 5s for mobile stability
     return () => clearInterval(int);
   }, []);
 
@@ -286,7 +302,7 @@ const styles = StyleSheet.create({
     paddingTop: 10 
   },
   tabBtn: { flex: 1, alignItems: 'center', gap: 4 },
-  tabLabel: { fontSize: 10, textTransform: 'uppercase', tracking: 1 },
+  tabLabel: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 },
   
   // List
   listItem: { flexDirection: 'row', backgroundColor: COLORS.card, padding: 16, borderRadius: 24, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },

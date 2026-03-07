@@ -97,6 +97,20 @@ def add_request_id_header(response):
     response.headers["X-Request-ID"] = g.get("request_id", "")
     return response
 
+@app.errorhandler(500)
+def handle_500(e):
+    import traceback
+    print(f"[Error] Global 500: {e}")
+    traceback.print_exc()
+    return err("internal_error", f"Station Core Failure: {str(e)}", 500)
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    print(f"[Error] Unhandled Exception: {e}")
+    traceback.print_exc()
+    return err("unhandled_exception", str(e), 500)
+
 # ---------------------------------------------------------------------------
 # Auth middleware helpers
 # ---------------------------------------------------------------------------

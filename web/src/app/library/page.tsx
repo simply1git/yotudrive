@@ -27,7 +27,8 @@ export default function LibraryPage() {
         },
         onError: (err: any) => {
             console.error('Delete failed:', err)
-            alert('Purge failed. Station core reported an error.')
+            const msg = err.response?.data?.error?.message || err.message || 'Purge failed.'
+            alert(`Station Error: ${msg}`)
         }
     })
 

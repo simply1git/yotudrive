@@ -20,7 +20,12 @@ export default function DecoderPage() {
 
     const startLocalDecode = useMutation({
         mutationFn: (data: any) => jobsApi.pipelineDecodeStart(data),
-        onSuccess: () => router.push('/transfers')
+        onSuccess: () => router.push('/transfers'),
+        onError: (err: any) => {
+            console.error('Decode failed:', err)
+            const msg = err.response?.data?.error?.message || err.message || 'Check your connection.'
+            alert(`Station Error: ${msg}`)
+        }
     })
 
     const handleSubmit = (e?: React.FormEvent) => {
@@ -39,12 +44,14 @@ export default function DecoderPage() {
 
     return (
         <div className="max-w-5xl mx-auto pb-20">
-            <header className="page-header mb-12">
-                <h1 className="page-title text-glow flex items-center gap-3">
-                    <Download size={32} className="text-success" />
-                    Decoder
-                </h1>
-                <p className="page-subtitle">Restore your data from video archives with bit-perfect accuracy.</p>
+            <header className="page-header mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h1 className="page-title text-glow flex items-center gap-3">
+                        <Download size={32} className="text-success" />
+                        Decoder
+                    </h1>
+                    <p className="page-subtitle">Restore your data from video archives with bit-perfect accuracy.</p>
+                </div>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

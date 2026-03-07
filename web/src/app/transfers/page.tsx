@@ -107,7 +107,6 @@ export default function TransfersPage() {
         queryFn: () => jobsApi.list({ limit: 50 }),
         refetchInterval: 2000
     })
-
     const clearMutation = useMutation({
         mutationFn: () => jobsApi.clear(),
         onSuccess: () => {
@@ -115,7 +114,8 @@ export default function TransfersPage() {
         },
         onError: (err: any) => {
             console.error('Clear failed:', err)
-            alert('Cosmic Cleanup failed. Try again later.')
+            const msg = err.response?.data?.error?.message || err.message || 'Cleanup failed.'
+            alert(`Station Error: ${msg}`)
         }
     })
 

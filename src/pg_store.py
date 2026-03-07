@@ -59,6 +59,10 @@ def init_db():
                     updated_at FLOAT
                 )
             """)
+            # Migrations for existing jobs table
+            cur.execute("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS managed BOOLEAN DEFAULT FALSE")
+            cur.execute("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS worker_id VARCHAR(255)")
+            cur.execute("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS claimed_at FLOAT")
             # Files
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS files (

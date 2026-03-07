@@ -36,7 +36,7 @@ export default function EncoderPage() {
         },
         onError: (err: any) => {
             console.error('Start job error:', err)
-            const msg = err.response?.data?.error?.message || 'Failed to initiate job. Check your connection.'
+            const msg = err.response?.data?.error?.message || err.message || 'Check your network connection.'
             alert(`Station Error: ${msg}`)
         }
     })
