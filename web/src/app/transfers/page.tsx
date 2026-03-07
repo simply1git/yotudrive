@@ -60,7 +60,7 @@ function JobCard({ job }: { job: Job }) {
                 <div className="flex flex-col items-end gap-2">
                     <div className="text-right">
                         <p className="text-sm font-medium text-primary">{job.progress}%</p>
-                        <p className="text-xs text-muted mt-0.5">{job.message}</p>
+                        <p className="text-xs text-muted mt-0.5 truncate max-w-[150px] md:max-w-xs">{job.message}</p>
                     </div>
                     {isWorking && (
                         <button
