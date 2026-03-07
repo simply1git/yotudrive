@@ -52,6 +52,9 @@ def init_db():
                     error TEXT,
                     owner_email VARCHAR(255),
                     public BOOLEAN DEFAULT FALSE,
+                    managed BOOLEAN DEFAULT FALSE,
+                    worker_id VARCHAR(255),
+                    claimed_at FLOAT,
                     created_at FLOAT,
                     updated_at FLOAT
                 )
@@ -328,7 +331,7 @@ class PGJobStore:
                         error = 'System interrupted (restart detected)',
                         message = 'Interrupted. Please restart the job manually.',
                         updated_at = %s
-                    WHERE status IN ('running', 'pending')
+                    WHERE (status IN ('running', 'pending')) AND (managed = FALSE)
                 """, (time.time(),))
             conn.commit()
         except Exception as e:
@@ -336,24 +339,44 @@ class PGJobStore:
         finally:
             conn.close()
 
-    def create_job(self, kind: str, owner_email: str = None, public: bool = False) -> dict:
+    def create_job(self, kind: str, owner_email: str = None, public: bool = False, managed: bool = False) -> dict:
         job_id = str(uuid.uuid4())
         job = {
             "id": job_id, "kind": kind, "status": "pending", "progress": 0,
             "message": "", "result": None, "error": None, "owner_email": owner_email,
-            "public": public, "created_at": time.time(), "updated_at": time.time()
+            "public": public, "managed": managed, "created_at": time.time(), "updated_at": time.time()
         }
         conn = get_pg_connection()
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """INSERT INTO jobs (id, kind, status, progress, message, owner_email, public, created_at, updated_at)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    """INSERT INTO jobs (id, kind, status, progress, message, owner_email, public, managed, created_at, updated_at)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     (job["id"], job["kind"], job["status"], job["progress"], job["message"],
-                     job["owner_email"], job["public"], job["created_at"], job["updated_at"])
+                     job["owner_email"], job["public"], job["managed"], job["created_at"], job["updated_at"])
                 )
             conn.commit()
             return job
+        finally:
+            conn.close()
+
+    def claim_job(self, job_id: str, worker_id: str) -> bool:
+        """Atomically claim a managed pending job for a specific worker."""
+        conn = get_pg_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE jobs 
+                    SET status = 'running', 
+                        worker_id = %s, 
+                        claimed_at = %s,
+                        updated_at = %s,
+                        message = 'Claimed by Nebula Worker'
+                    WHERE id = %s AND status = 'pending' AND managed = TRUE
+                """, (worker_id, time.time(), time.time(), job_id))
+                success = cur.rowcount > 0
+            conn.commit()
+            return success
         finally:
             conn.close()
 

@@ -65,6 +65,8 @@ export interface Job {
   result?: any
   error?: string
   owner_email?: string
+  managed?: boolean
+  worker_id?: string
   created_at: number
 }
 
@@ -117,11 +119,11 @@ export const jobsApi = {
   get: (jobId: string) => get<{ job: Job }>(`/api/jobs/${jobId}`),
   cancel: (jobId: string) => post<ApiResponse>(`/api/jobs/${jobId}/cancel`),
   clear: () => post<ApiResponse>(`/api/me/jobs/clear`),
-  encodeStart: (data: { input_file: string; output_dir: string; password?: string; block_size?: number; ecc_bytes?: number }) =>
+  encodeStart: (data: { input_file: string; output_dir: string; password?: string; block_size?: number; ecc_bytes?: number; managed?: boolean }) =>
     post<{ job_id: string }>('/api/encode/start', data),
   decodeStart: (data: { frames_dir: string; output_path: string; password?: string }) =>
     post<{ job_id: string }>('/api/decode/start', data),
-  pipelineEncodeStart: (data: { input_file: string; output_video: string; password?: string; overrides?: any; register_in_db?: boolean }) =>
+  pipelineEncodeStart: (data: { input_file: string; output_video: string; password?: string; overrides?: any; register_in_db?: boolean; managed?: boolean }) =>
     post<{ job_id: string }>('/api/pipeline/encode-video/start', data),
   pipelineDecodeStart: (data: { video_path: string; output_file: string; password?: string; overrides?: any }) =>
     post<{ job_id: string }>('/api/pipeline/decode-video/start', data),

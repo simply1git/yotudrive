@@ -14,7 +14,7 @@ export default function EncoderPage() {
     const router = useRouter()
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [pathInput, setPathInput] = useState('')
-    const [advanced, setAdvanced] = useState(false)
+    const [mode, setMode] = useState<'standard' | 'advanced' | 'nebula'>('standard')
     const [isDragging, setIsDragging] = useState(false)
     const [overrides, setOverrides] = useState({
         block_size: 2,
@@ -58,7 +58,8 @@ export default function EncoderPage() {
             input_file: serverPath,
             output_video: outVideo,
             register_in_db: true,
-            overrides: advanced ? overrides : undefined
+            managed: mode === 'nebula',
+            overrides: mode === 'advanced' ? overrides : undefined
         })
     }
 
@@ -106,18 +107,24 @@ export default function EncoderPage() {
                     <p className="page-subtitle">Transform data into high-resilience YouTube streams.</p>
                 </div>
                 
-                <div className="flex bg-surface rounded-xl p-1 border border-subtle">
+                <div className="flex bg-surface rounded-xl p-1 border border-subtle overflow-hidden">
                     <button 
-                        onClick={() => setAdvanced(false)}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${!advanced ? 'bg-glass text-primary shadow-glow' : 'text-muted'}`}
+                        onClick={() => setMode('standard')}
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${mode === 'standard' ? 'bg-glass text-primary shadow-glow' : 'text-muted hover:text-primary'}`}
                     >
                         Standard
                     </button>
                     <button 
-                        onClick={() => setAdvanced(true)}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${advanced ? 'bg-glass text-primary shadow-glow' : 'text-muted'}`}
+                        onClick={() => setMode('advanced')}
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${mode === 'advanced' ? 'bg-glass text-primary shadow-glow' : 'text-muted hover:text-primary'}`}
                     >
                         Advanced
+                    </button>
+                    <button 
+                        onClick={() => setMode('nebula')}
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${mode === 'nebula' ? 'bg-accent text-bg-surface-solid shadow-glow' : 'text-muted hover:text-accent'}`}
+                    >
+                        Nebula (GPU)
                     </button>
                 </div>
             </header>
@@ -212,10 +219,10 @@ export default function EncoderPage() {
                     </div>
                 </div>
 
-                {/* Sidebar Config */}
+                {/* Sidebar Config / Info */}
                 <div className="space-y-6">
                     <AnimatePresence mode="wait">
-                        {advanced ? (
+                        {mode === 'advanced' ? (
                             <motion.div
                                 key="advanced"
                                 initial={{ opacity: 0, x: 20 }}
@@ -281,6 +288,33 @@ export default function EncoderPage() {
                                     </div>
                                 </div>
                             </motion.div>
+                        ) : mode === 'nebula' ? (
+                            <motion.div
+                                key="nebula"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="card h-full p-6 space-y-4 border-accent/40 bg-accent/5"
+                            >
+                                <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center text-accent mb-2">
+                                    <Zap size={24} />
+                                </div>
+                                <h3 className="font-bold font-display text-accent">Nebula Mode</h3>
+                                <p className="text-xs text-muted leading-relaxed">
+                                    Offload the heavy encoding to a remote **GPU Worker** (Google Colab / Kaggle).
+                                </p>
+                                <div className="p-3 rounded-lg bg-surface/50 border border-subtle space-y-2">
+                                    <p className="text-[10px] font-bold text-accent uppercase tracking-widest">How to use:</p>
+                                    <ol className="text-[10px] text-muted list-decimal list-inside space-y-1">
+                                        <li>Start the job here</li>
+                                        <li>Open your Nebula Worker script</li>
+                                        <li>Worker claims job & encodes on GPU</li>
+                                    </ol>
+                                </div>
+                                <p className="text-[10px] text-muted italic">
+                                    Ideal for files over 1GB or 18GB archives.
+                                </p>
+                            </motion.div>
                         ) : (
                             <motion.div
                                 key="standard"
@@ -298,7 +332,7 @@ export default function EncoderPage() {
                                         Using optimized defaults: 2px blocks, 32-byte parity, and multi-threaded CPU encoding.
                                     </p>
                                     <button 
-                                        onClick={() => setAdvanced(true)}
+                                        onClick={() => setMode('advanced')}
                                         className="mt-8 text-xs font-bold text-accent hover:underline uppercase tracking-widest"
                                     >
                                         Customize parameters

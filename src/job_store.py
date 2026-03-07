@@ -73,7 +73,7 @@ class JobStore:
     # ------------------------------------------------------------------
     # CRUD
     # ------------------------------------------------------------------
-    def create_job(self, kind: str, owner_email: str = None, public: bool = False) -> dict:
+    def create_job(self, kind: str, owner_email: str = None, public: bool = False, managed: bool = False) -> dict:
         job_id = str(uuid.uuid4())
         job = {
             "id": job_id,
@@ -85,6 +85,7 @@ class JobStore:
             "error": None,
             "owner_email": owner_email,
             "public": public,
+            "managed": managed,
             "created_at": time.time(),
             "updated_at": time.time(),
         }
@@ -92,6 +93,20 @@ class JobStore:
             self._data[job_id] = job
             self._save()
         return dict(job)
+
+    def claim_job(self, job_id: str, worker_id: str) -> bool:
+        """Atomic claim for base JobStore (JSON-backed)."""
+        with self._lock:
+            job = self._data.get(job_id)
+            if job and job.get("status") == "pending" and job.get("managed"):
+                job["status"] = "running"
+                job["worker_id"] = worker_id
+                job["claimed_at"] = time.time()
+                job["updated_at"] = time.time()
+                job["message"] = "Claimed by Nebula Worker"
+                self._save()
+                return True
+            return False
 
     def update_job(self, job_id: str, **kwargs):
         allowed = {"status", "progress", "message", "result", "error"}

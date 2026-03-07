@@ -831,6 +831,24 @@ def cancel_job(job_id):
     else:
         return err("invalid_state", "Job is not running or already completed")
 
+@app.patch("/api/jobs/<job_id>/claim")
+def claim_job_api(job_id):
+    data = request.get_json(silent=True) or {}
+    worker_id = data.get("worker_id", "unnamed-worker")
+    success = _jobs().claim_job(job_id, worker_id)
+    if success:
+        return ok(message=f"Job {job_id} claimed by {worker_id}")
+    return err("conflict", "Job already claimed or not eligible for remote worker", 409)
+
+@app.post("/api/jobs/<job_id>/update")
+def update_job_api(job_id):
+    # For now, permissive. In production, check worker_id or secret.
+    data = request.get_json(silent=True) or {}
+    success = _jobs().update_job(job_id, **data)
+    if success:
+        return ok(message="Job updated")
+    return err("not_found", "Job not found", 404)
+
 # ===========================================================================
 # ENCODE / DECODE (raw)
 # ===========================================================================
@@ -852,7 +870,12 @@ def encode_start():
     threads = int(data.get("threads", s.get("threads", 4)))
 
     owner = g.user["email"] if g.user else None
-    job = _jobs().create_job("encode", owner_email=owner)
+    managed = bool(data.get("managed", False))
+    job = _jobs().create_job("encode", owner_email=owner, managed=managed)
+
+    if managed:
+        return ok(job_id=job["id"], managed=True), 202
+
     cancel = threading.Event()
 
     def run():
@@ -922,9 +945,14 @@ def pipeline_encode():
     register_in_db = bool(data.get("register_in_db", False))
 
     owner = g.user["email"] if g.user else None
-    job = _jobs().create_job("pipeline_encode", owner_email=owner)
-    cancel = threading.Event()
+    managed = bool(data.get("managed", False))
+    job = _jobs().create_job("pipeline_encode", owner_email=owner, managed=managed)
     job_id = job["id"]
+
+    if managed:
+        return ok(job_id=job_id, managed=True), 202
+
+    cancel = threading.Event()
 
     def run():
         import tempfile, os as _os
