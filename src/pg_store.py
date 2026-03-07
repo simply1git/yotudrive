@@ -312,6 +312,7 @@ class PGJobStore:
     def __init__(self, max_workers: int = 4):
         from concurrent.futures import ThreadPoolExecutor
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="yotu-job")
+        self._lock = threading.Lock()
         self._active_events = {}
         init_db()
 
