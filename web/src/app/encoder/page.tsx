@@ -1,11 +1,11 @@
 'use client'
 import { useState, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { jobsApi } from '@/lib/api'
+import { jobsApi, storageApi } from '@/lib/api'
 import { 
-  Upload, File, Play, Settings2, 
-  CheckCircle2, Box, Zap, ArrowRight,
-  Monitor, Cpu, Layers, MousePointer2, ShieldCheck
+  Upload, File, Box, Zap, ArrowRight,
+  Monitor, Cpu, Layers, MousePointer2, ShieldCheck,
+  Settings2
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,6 +13,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 export default function EncoderPage() {
     const router = useRouter()
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [pathInput, setPathInput] = useState('')
+    const [advanced, setAdvanced] = useState(false)
+    const [isDragging, setIsDragging] = useState(false)
+    const [overrides, setOverrides] = useState({
+        block_size: 2,
+        ecc_bytes: 32,
+        threads: 4,
+        encoder: 'libx264'
+    })
+    
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const uploadFile = useMutation({
