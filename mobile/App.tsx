@@ -277,7 +277,14 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   
   // Tab Bar
-  tabBar: { flexDirection: 'row', backgroundColor: COLORS.surface, borderTopWidth: 1, borderColor: COLORS.border, paddingBottom: Platform.OS === 'ios' ? 30 : 10, paddingTop: 10 },
+  tabBar: { 
+    flexDirection: 'row', 
+    backgroundColor: COLORS.surface, 
+    borderTopWidth: 1, 
+    borderColor: COLORS.border, 
+    paddingBottom: Platform.OS === 'ios' ? 30 : 10, 
+    paddingTop: 10 
+  },
   tabBtn: { flex: 1, alignItems: 'center', gap: 4 },
   tabLabel: { fontSize: 10, textTransform: 'uppercase', tracking: 1 },
   

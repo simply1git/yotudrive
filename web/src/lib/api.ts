@@ -46,106 +46,128 @@ api.interceptors.response.use(
   }
 )
 
+// ─── Types ────────────────────────────────────────────────────────
+export interface ApiResponse<T = any> {
+  status: 'ok' | 'error'
+  data?: T
+  error?: {
+    code: string
+    message: string
+  }
+}
+
+export interface Job {
+  id: string
+  kind: string
+  status: 'pending' | 'running' | 'done' | 'failed'
+  progress: number
+  message: string
+  result?: any
+  error?: string
+  owner_email?: string
+  created_at: number
+}
+
 // ─── Helper ───────────────────────────────────────────────────────
-async function get<T = any>(path: string, params?: any): Promise<T> {
+async function get<T>(path: string, params?: any): Promise<T> {
   const res = await api.get(path, { params })
   return res.data
 }
 
-async function post<T = any>(path: string, body?: any): Promise<T> {
+async function post<T>(path: string, body?: any): Promise<T> {
   const res = await api.post(path, body)
   return res.data
 }
 
-async function put<T = any>(path: string, body?: any): Promise<T> {
+async function put<T>(path: string, body?: any): Promise<T> {
   const res = await api.put(path, body)
   return res.data
 }
 
-async function del<T = any>(path: string, params?: any): Promise<T> {
+async function del<T>(path: string, params?: any): Promise<T> {
   const res = await api.delete(path, { params })
   return res.data
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────
 export const authApi = {
-  health: () => get('/api/health'),
-  devLogin: (email: string) => post('/api/auth/dev/login', { email }),
-  googleStart: () => get('/api/auth/google/start'),
-  googleStatus: () => get('/api/auth/google/status'),
-  session: () => get('/api/auth/session'),
-  logout: () => post('/api/auth/logout'),
-  bootstrapAdmin: (email: string) => post('/api/auth/bootstrap-admin', { email }),
+  health: () => get<ApiResponse>('/api/health'),
+  devLogin: (email: string) => post<{ user: any; token: string }>('/api/auth/dev/login', { email }),
+  googleStart: () => get<{ url: string }>('/api/auth/google/start'),
+  googleStatus: () => get<{ authenticated: boolean; user?: any }>('/api/auth/google/status'),
+  session: () => get<{ user: any }>('/api/auth/session'),
+  logout: () => post<ApiResponse>('/api/auth/logout'),
+  bootstrapAdmin: (email: string) => post<ApiResponse>('/api/auth/bootstrap-admin', { email }),
 }
 
 // ─── Files ───────────────────────────────────────────────────────
 export const filesApi = {
-  list: (params?: { include_legacy?: boolean }) => get('/api/me/files', params),
-  delete: (fileId: string) => del(`/api/me/files/${fileId}`),
+  list: (params?: { include_legacy?: boolean }) => get<{ files: any[] }>('/api/me/files', params),
+  delete: (fileId: string) => del<ApiResponse>(`/api/me/files/${fileId}`),
   attach: (fileId: string, videoId: string, videoUrl?: string) =>
-    post(`/api/me/files/${fileId}/attach`, { video_id: videoId, video_url: videoUrl }),
+    post<ApiResponse>(`/api/me/files/${fileId}/attach`, { video_id: videoId, video_url: videoUrl }),
   registerManual: (data: { file_name: string; video_id: string; file_size?: number }) =>
-    post('/api/upload/manual/register', data),
+    post<{ file_id: string }>('/api/upload/manual/register', data),
 }
 
 // ─── Jobs ─────────────────────────────────────────────────────────
 export const jobsApi = {
   list: (params?: { limit?: number; offset?: number; status?: string }) =>
-    get('/api/me/jobs', params),
-  get: (jobId: string) => get(`/api/jobs/${jobId}`),
+    get<{ jobs: Job[]; total: number }>('/api/me/jobs', params),
+  get: (jobId: string) => get<{ job: Job }>(`/api/jobs/${jobId}`),
   encodeStart: (data: { input_file: string; output_dir: string; password?: string; block_size?: number; ecc_bytes?: number }) =>
-    post('/api/encode/start', data),
+    post<{ job_id: string }>('/api/encode/start', data),
   decodeStart: (data: { frames_dir: string; output_path: string; password?: string }) =>
-    post('/api/decode/start', data),
+    post<{ job_id: string }>('/api/decode/start', data),
   pipelineEncodeStart: (data: { input_file: string; output_video: string; password?: string; overrides?: any; register_in_db?: boolean }) =>
-    post('/api/pipeline/encode-video/start', data),
+    post<{ job_id: string }>('/api/pipeline/encode-video/start', data),
   pipelineDecodeStart: (data: { video_path: string; output_file: string; password?: string; overrides?: any }) =>
-    post('/api/pipeline/decode-video/start', data),
+    post<{ job_id: string }>('/api/pipeline/decode-video/start', data),
 }
 
 // ─── Settings ─────────────────────────────────────────────────────
 export const settingsApi = {
-  get: () => get('/api/settings'),
-  update: (settings: Record<string, any>) => put('/api/settings', settings),
+  get: () => get<Record<string, any>>('/api/settings'),
+  update: (settings: Record<string, any>) => put<ApiResponse>('/api/settings', settings),
 }
 
 // ─── Tools ────────────────────────────────────────────────────────
 export const toolsApi = {
-  verify: (videoPath: string) => post('/api/verify', { video_path: videoPath }),
-  autoJoin: (fileList: string[]) => post('/api/tools/auto-join', { file_list: fileList }),
+  verify: (videoPath: string) => post<ApiResponse>('/api/verify', { video_path: videoPath }),
+  autoJoin: (fileList: string[]) => post<ApiResponse>('/api/tools/auto-join', { file_list: fileList }),
   inspectPlaylist: (playlistUrl: string) =>
-    post('/api/youtube/playlist/inspect', { playlist_url: playlistUrl }),
+    post<any>('/api/youtube/playlist/inspect', { playlist_url: playlistUrl }),
 }
 
 // ─── Admin ────────────────────────────────────────────────────────
 export const adminApi = {
   users: {
-    list: () => get('/api/admin/users'),
-    add: (email: string, role?: string) => post('/api/admin/users', { email, role }),
+    list: () => get<any[]>('/api/admin/users'),
+    add: (email: string, role?: string) => post<any>('/api/admin/users', { email, role }),
     patch: (email: string, enabled: boolean) =>
-      api.patch(`/api/admin/users/${email}`, { enabled }).then((r) => r.data),
+      api.patch<any>(`/api/admin/users/${email}`, { enabled }).then((r) => r.data),
   },
   sessions: {
     list: (params?: { email?: string; include_revoked?: boolean }) =>
-      get('/api/admin/sessions', params),
-    revokeAll: (email: string) => del('/api/admin/sessions', { email }),
-    revoke: (tokenId: string) => del(`/api/admin/sessions/${tokenId}`),
+      get<any[]>('/api/admin/sessions', params),
+    revokeAll: (email: string) => del<ApiResponse>('/api/admin/sessions', { email }),
+    revoke: (tokenId: string) => del<ApiResponse>(`/api/admin/sessions/${tokenId}`),
   },
   jobs: {
     list: (params?: { owner_email?: string; status?: string }) =>
-      get('/api/admin/jobs', params),
-    get: (jobId: string) => get(`/api/admin/jobs/${jobId}`),
-    delete: (jobId: string) => del(`/api/admin/jobs/${jobId}`),
+      get<{ jobs: Job[]; total: number }>('/api/admin/jobs', params),
+    get: (jobId: string) => get<{ job: Job }>(`/api/admin/jobs/${jobId}`),
+    delete: (jobId: string) => del<ApiResponse>(`/api/admin/jobs/${jobId}`),
   },
-  metrics: () => get('/api/admin/metrics'),
+  metrics: () => get<any>('/api/admin/metrics'),
   system: {
-    logs: () => get('/api/admin/system/logs'),
+    logs: () => get<string[]>('/api/admin/system/logs'),
   },
 }
 
 // ─── Storage ──────────────────────────────────────────────────────
 export const storageApi = {
-  upload: (file: File) => {
+  upload: (file: File): Promise<{ path: string }> => {
     const formData = new FormData()
     formData.append('file', file)
     return api.post('/api/storage/upload', formData, {

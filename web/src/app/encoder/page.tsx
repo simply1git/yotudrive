@@ -47,6 +47,7 @@ export default function EncoderPage() {
                 const uploadRes = await uploadFile.mutateAsync(selectedFile)
                 serverPath = uploadRes.path
             } catch (err) {
+                console.error('Upload error:', err)
                 alert('Upload failed. Please try again.')
                 return
             }

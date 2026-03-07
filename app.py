@@ -31,9 +31,30 @@ VERSION = "1.1.0"
 # ---------------------------------------------------------------------------
 # Lazy singletons (imported on first request to avoid import-time side effects)
 # ---------------------------------------------------------------------------
+_auth_store = None
+_job_store = None
+_db = None
+_engine_instance = None
+_settings_instance = None
+
+def init_services():
+    from src.janitor import start_janitor_thread
+    start_janitor_thread(interval_minutes=30)
+    print("[System] Janitor service started (30m interval)")
+
+# Start background services immediately
+init_services()
+
 def _auth():
-    from src.auth_store import get_auth_store
-    return get_auth_store()
+    global _auth_store
+    if _auth_store is None:
+        if os.environ.get("DATABASE_URL"):
+            from src.pg_store import PGAuthStore
+            _auth_store = PGAuthStore()
+        else:
+            from src.auth_store import AuthStore
+            _auth_store = AuthStore()
+    return _auth_store
 
 def _jobs():
     from src.job_store import get_job_store
