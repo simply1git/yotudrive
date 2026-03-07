@@ -1,7 +1,7 @@
 'use client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { jobsApi, Job } from '@/lib/api'
-import { Activity, XCircle, CheckCircle2, Clock, PlayCircle, Loader2 } from 'lucide-react'
+import { Activity, XCircle, CheckCircle2, Clock, PlayCircle, Loader2, Trash2 } from 'lucide-react'
 
 function getStatusIcon(status: string) {
     switch (status) {
@@ -99,6 +99,8 @@ function JobCard({ job }: { job: Job }) {
 }
 
 export default function TransfersPage() {
+    const queryClient = useQueryClient()
+    
     // Polling every 2s
     const { data, isLoading } = useQuery({
         queryKey: ['jobs'],
@@ -106,13 +108,33 @@ export default function TransfersPage() {
         refetchInterval: 2000
     })
 
+    const clearMutation = useMutation({
+        mutationFn: () => jobsApi.clear(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['jobs'] })
+        }
+    })
+
     const jobs = data?.jobs || []
+    const hasTerminalJobs = jobs.some((j: Job) => ['done', 'failed', 'cancelled'].includes(j.status))
 
     return (
         <div className="max-w-5xl mx-auto px-4">
-            <header className="page-header mb-8">
-                <h1 className="page-title"><Activity size={28} className="inline mr-3 text-accent" />Transfers & Jobs</h1>
-                <p className="page-subtitle">Live monitoring of your cosmic data pipelines.</p>
+            <header className="page-header mb-8 flex items-end justify-between">
+                <div>
+                    <h1 className="page-title"><Activity size={28} className="inline mr-3 text-accent" />Transfers & Jobs</h1>
+                    <p className="page-subtitle">Live monitoring of your cosmic data pipelines.</p>
+                </div>
+                {hasTerminalJobs && (
+                    <button
+                        onClick={() => clearMutation.mutate()}
+                        disabled={clearMutation.isPending}
+                        className="btn-glass px-4 py-2 text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-red-500/20 hover:text-red-300 transition-all border border-red-500/30 text-red-400 disabled:opacity-50"
+                    >
+                        {clearMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        Clear Completed
+                    </button>
+                )}
             </header>
 
             {isLoading && jobs.length === 0 ? (

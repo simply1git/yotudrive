@@ -447,6 +447,15 @@ def me_jobs():
     )
     return ok(jobs=jobs, total=total)
 
+@app.post("/api/me/jobs/clear")
+def me_clear_jobs():
+    e = require_auth()
+    if e:
+        return e
+    _jobs().clear_completed_jobs(g.user["email"])
+    return ok(message="Completed jobs cleared")
+
+
 @app.get("/api/me/jobs/<job_id>")
 def me_get_job(job_id):
     e = require_auth()

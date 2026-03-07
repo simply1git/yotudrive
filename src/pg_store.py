@@ -328,7 +328,7 @@ class PGJobStore:
                         error = 'System interrupted (restart detected)',
                         message = 'Interrupted. Please restart the job manually.',
                         updated_at = %s
-                    WHERE status = 'running'
+                    WHERE status IN ('running', 'pending')
                 """, (time.time(),))
             conn.commit()
         except Exception as e:
@@ -431,6 +431,20 @@ class PGJobStore:
                 
                 cur.execute(q, params)
                 return [dict(r) for r in cur.fetchall()], total
+        finally:
+            conn.close()
+
+    def clear_completed_jobs(self, owner_email: str):
+        """Delete all terminal jobs (done, failed, cancelled) for a specific user."""
+        conn = get_pg_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    DELETE FROM jobs 
+                    WHERE owner_email = %s 
+                      AND status IN ('done', 'failed', 'cancelled')
+                """, (owner_email,))
+            conn.commit()
         finally:
             conn.close()
 
