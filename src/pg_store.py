@@ -312,6 +312,7 @@ class PGJobStore:
     def __init__(self, max_workers: int = 4):
         from concurrent.futures import ThreadPoolExecutor
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="yotu-job")
+        self._active_events = {}
         init_db()
 
     def create_job(self, kind: str, owner_email: str = None, public: bool = False) -> dict:
@@ -377,6 +378,14 @@ class PGJobStore:
         finally:
             conn.close()
 
+    def cancel_job(self, job_id: str):
+        with self._lock:
+            evt = self._active_events.get(job_id)
+            if evt:
+                evt.set()
+                return True
+        return False
+
     def list_jobs(self, owner_email: str = None, status_filter: list = None,
                   include_public: bool = False, limit: int = 50, offset: int = 0) -> tuple:
         conn = get_pg_connection()
@@ -405,14 +414,26 @@ class PGJobStore:
             conn.close()
 
     def submit(self, fn: Callable, job_id: str, *args, **kwargs):
+        cancel_event = threading.Event()
+        with self._lock:
+            self._active_events[job_id] = cancel_event
         self.update_job(job_id, status="running", message="Starting…")
         def wrapper():
             try:
                 result = fn(*args, **kwargs)
                 self.update_job(job_id, status="done", progress=100, message="Completed", result=result)
             except Exception as e:
-                self.update_job(job_id, status="failed", message=str(e), error=str(e))
+                msg = str(e)
+                if "cancelled" in msg.lower() or "process cancelled" in msg.lower():
+                    self.update_job(job_id, status="cancelled", message="Cancelled by user")
+                else:
+                    self.update_job(job_id, status="failed", message=msg, error=msg)
+            finally:
+                with self._lock:
+                    if job_id in self._active_events:
+                        del self._active_events[job_id]
         self._executor.submit(wrapper)
+        return cancel_event
 
     def make_progress_callback(self, job_id: str, message_prefix: str = "") -> Callable:
         def cb(pct):

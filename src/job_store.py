@@ -28,6 +28,7 @@ class JobStore:
         self._lock = threading.Lock()
         self._data: dict = {}  # job_id -> job_dict
         self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="yotu-job")
+        self._active_events = {} # job_id -> threading.Event
         os.makedirs(os.path.dirname(path), exist_ok=True)
         self._load()
         self.recover()
@@ -115,6 +116,15 @@ class JobStore:
                 del self._data[job_id]
                 self._save()
 
+    def cancel_job(self, job_id: str):
+        """Signal a job to cancel if it supports checking for cancellation."""
+        with self._lock:
+            evt = self._active_events.get(job_id)
+            if evt:
+                evt.set()
+                return True
+        return False
+
     def list_jobs(
         self,
         owner_email: str = None,
@@ -150,20 +160,31 @@ class JobStore:
         Submit a callable to the thread pool.
         Auto-sets job status to running/done/failed.
         """
+        cancel_event = threading.Event()
+        with self._lock:
+            self._active_events[job_id] = cancel_event
+
         self.update_job(job_id, status="running", message="Starting…")
 
         def wrapper():
             try:
+                # Inject cancel_event as first arg if the function accepts it or uses make_cancel_check
                 result = fn(*args, **kwargs)
                 self.update_job(job_id, status="done", progress=100,
                                 message="Completed", result=result)
             except Exception as e:
-                if "cancelled" in str(e).lower() or "process cancelled" in str(e).lower():
+                msg = str(e)
+                if "cancelled" in msg.lower() or "process cancelled" in msg.lower():
                     self.update_job(job_id, status="cancelled", message="Cancelled by user")
                 else:
-                    self.update_job(job_id, status="failed", message=str(e), error=str(e))
+                    self.update_job(job_id, status="failed", message=msg, error=msg)
+            finally:
+                with self._lock:
+                    if job_id in self._active_events:
+                        del self._active_events[job_id]
 
         self._executor.submit(wrapper)
+        return cancel_event
 
     def make_progress_callback(self, job_id: str, message_prefix: str = "") -> Callable:
         """Returns a progress_callback(pct) suitable for Encoder/Decoder."""

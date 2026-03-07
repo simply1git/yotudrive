@@ -13,9 +13,9 @@ export default function TransfersPage() {
         refetchInterval: 2000
     })
 
-    // We could implement job cancellation on backend, but for UI sake let's just delete the job
-    const delMutation = useMutation({
-        mutationFn: (id: string) => jobsApi.get(id), // Pseudo cancel by deleting (if admin/owns)
+    // Live cancellation
+    const cancelMutation = useMutation({
+        mutationFn: (id: string) => jobsApi.cancel(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['jobs'] })
     })
 
@@ -72,9 +72,21 @@ export default function TransfersPage() {
                                         <p className="text-xs text-muted font-mono mt-0.5">ID: {job.id}</p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-sm font-medium text-primary">{job.progress}%</p>
-                                    <p className="text-xs text-muted mt-0.5">{job.message}</p>
+                                <div className="flex flex-col items-end gap-2">
+                                    <div className="text-right">
+                                        <p className="text-sm font-medium text-primary">{job.progress}%</p>
+                                        <p className="text-xs text-muted mt-0.5">{job.message}</p>
+                                    </div>
+                                    {(job.status === 'running' || job.status === 'pending') && (
+                                        <button
+                                            onClick={() => cancelMutation.mutate(job.id)}
+                                            disabled={cancelMutation.isPending}
+                                            className="text-[10px] font-bold text-red-400 hover:text-red-300 uppercase tracking-wider flex items-center gap-1 transition-colors"
+                                        >
+                                            <XCircle size={12} />
+                                            {cancelMutation.isPending ? 'Aborting...' : 'Cancel'}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 

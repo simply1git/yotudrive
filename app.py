@@ -798,10 +798,29 @@ def playlist_inspect():
 # ===========================================================================
 @app.get("/api/jobs/<job_id>")
 def get_job(job_id):
+    optional_auth()
     job = _jobs().get_job(job_id)
     if not job:
         return err("not_found", "Job not found", 404)
     return ok(job=job)
+
+@app.post("/api/jobs/<job_id>/cancel")
+def cancel_job(job_id):
+    optional_auth()
+    job = _jobs().get_job(job_id)
+    if not job:
+        return err("not_found", "Job not found", 404)
+    
+    # Ownership check
+    if g.user:
+        if job.get("owner_email") != g.user["email"]:
+            return err("forbidden", "You do not own this job", 403)
+            
+    success = _jobs().cancel_job(job_id)
+    if success:
+        return ok(message="Cancellation signal sent")
+    else:
+        return err("invalid_state", "Job is not running or already completed")
 
 # ===========================================================================
 # ENCODE / DECODE (raw)
@@ -904,6 +923,11 @@ def pipeline_encode():
             _os.path.dirname(output_video),
             f"_frames_{job_id[:8]}"
         )
+        def stitch_cb(pct):
+            # Scale 0-100% of stitching to 70-100% of total pipeline
+            total_pct = 70 + (pct * 0.3)
+            _jobs().update_job(job_id, progress=int(total_pct), message=f"Stitching {int(pct)}%")
+
         _engine().encode_file(
             input_file, frames_dir,
             password=password, block_size=block_size,
@@ -911,8 +935,8 @@ def pipeline_encode():
             progress_cb=_jobs().make_progress_callback(job_id, "Encoding "),
             check_cancel=_jobs().make_cancel_check(cancel),
         )
-        _jobs().update_job(job_id, progress=70, message="Stitching video…")
         _engine().stitch_frames(frames_dir, output_video, encoder=encoder,
+                                progress_cb=stitch_cb,
                                 check_cancel=_jobs().make_cancel_check(cancel))
         # Cleanup frames
         import shutil

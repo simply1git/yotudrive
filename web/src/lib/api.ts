@@ -115,6 +115,7 @@ export const jobsApi = {
   list: (params?: { limit?: number; offset?: number; status?: string }) =>
     get<{ jobs: Job[]; total: number }>('/api/me/jobs', params),
   get: (jobId: string) => get<{ job: Job }>(`/api/jobs/${jobId}`),
+  cancel: (jobId: string) => post<ApiResponse>(`/api/jobs/${jobId}/cancel`),
   encodeStart: (data: { input_file: string; output_dir: string; password?: string; block_size?: number; ecc_bytes?: number }) =>
     post<{ job_id: string }>('/api/encode/start', data),
   decodeStart: (data: { frames_dir: string; output_path: string; password?: string }) =>

@@ -96,7 +96,14 @@ def stitch_frames(frames_dir, output_video, framerate=30, encoder="libx264", pre
         output_video
     ])
     
-    process = run_ffmpeg(cmd, check_cancel)
+    # Estimate total frames if not provided
+    total_frames = None
+    try:
+        total_frames = len([f for f in os.listdir(frames_dir) if f.endswith('.png')])
+    except:
+        pass
+
+    process = run_ffmpeg(cmd, check_cancel, progress_cb=progress_cb, total_frames=total_frames)
     
     # Automatic fallback logic for hardware encoders
     if process.returncode != 0:
@@ -110,10 +117,11 @@ def stitch_frames(frames_dir, output_video, framerate=30, encoder="libx264", pre
             
     return process
 
-def run_ffmpeg(cmd, check_cancel=None):
+def run_ffmpeg(cmd, check_cancel=None, progress_cb=None, total_frames=None):
     import subprocess
     import threading
     import time
+    import re
     
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
@@ -124,10 +132,18 @@ def run_ffmpeg(cmd, check_cancel=None):
             # We already set -loglevel error, so stderr should be clean.
             for line in iter(stream.readline, b''):
                 decoded_line = line.decode('utf-8', errors='replace').strip()
-                if decoded_line:
-                    # Filter out common benign FFmpeg info that leaks through
-                    if not any(x in decoded_line for x in ["frame=", "fps=", "size=", "time=", "bitrate="]):
-                        print(decoded_line)
+                if not decoded_line: continue
+                
+                # Progress parsing: "frame=  123 fps=..."
+                if progress_cb and total_frames:
+                    match = re.search(r'frame=\s*(\d+)', decoded_line)
+                    if match:
+                        frame_count = int(match.group(1))
+                        pct = min(99, (frame_count / total_frames) * 100)
+                        progress_cb(pct)
+
+                if not any(x in decoded_line for x in ["frame=", "fps=", "size=", "time=", "bitrate="]):
+                    print(decoded_line)
         except:
             pass
         finally:
