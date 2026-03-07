@@ -83,11 +83,12 @@ class Engine:
         encoder: str = "libx264",
         framerate: int = 30,
         check_cancel: Callable = None,
+        progress_cb: Callable = None,
     ):
         """Stitch PNG frames into a video file (for full pipeline)."""
         from src.ffmpeg_utils import stitch_frames
         stitch_frames(frames_dir, output_video, framerate=framerate,
-                      encoder=encoder, check_cancel=check_cancel)
+                      encoder=encoder, check_cancel=check_cancel, progress_cb=progress_cb)
 
     def extract_from_video(
         self,

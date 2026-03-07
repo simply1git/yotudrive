@@ -49,7 +49,7 @@ def extract_frames(video_path, output_dir, limit=None, check_cancel=None):
     
     return run_ffmpeg(cmd, check_cancel)
 
-def stitch_frames(frames_dir, output_video, framerate=30, encoder="libx264", preset="medium", check_cancel=None):
+def stitch_frames(frames_dir, output_video, framerate=30, encoder="libx264", preset="medium", check_cancel=None, progress_cb=None):
     """
     Stitches frames from a directory into a video file.
     """
@@ -110,7 +110,7 @@ def stitch_frames(frames_dir, output_video, framerate=30, encoder="libx264", pre
         if encoder != "libx264":
             print(f"Warning: Encoder '{encoder}' failed with return code {process.returncode}.")
             print("Falling back to software encoder (libx264)...")
-            return stitch_frames(frames_dir, output_video, framerate, encoder="libx264", preset=preset, check_cancel=check_cancel)
+            return stitch_frames(frames_dir, output_video, framerate, encoder="libx264", preset=preset, check_cancel=check_cancel, progress_cb=progress_cb)
         else:
             # If libx264 fails, raise exception to stop the process
             raise subprocess.CalledProcessError(process.returncode, cmd)
