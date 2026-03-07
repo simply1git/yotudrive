@@ -315,6 +315,26 @@ class PGJobStore:
         self._lock = threading.Lock()
         self._active_events = {}
         init_db()
+        self.recover()
+
+    def recover(self):
+        """Mark interrupted jobs as failed upon server restart."""
+        conn = get_pg_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE jobs 
+                    SET status = 'failed', 
+                        error = 'System interrupted (restart detected)',
+                        message = 'Interrupted. Please restart the job manually.',
+                        updated_at = %s
+                    WHERE status = 'running'
+                """, (time.time(),))
+            conn.commit()
+        except Exception as e:
+            print(f"[PGJobStore] Recovery error: {e}")
+        finally:
+            conn.close()
 
     def create_job(self, kind: str, owner_email: str = None, public: bool = False) -> dict:
         job_id = str(uuid.uuid4())
