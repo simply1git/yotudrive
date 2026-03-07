@@ -22,6 +22,9 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+app.config['UPLOAD_FOLDER'] = 'data/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 VERSION = "1.1.0"
 
@@ -613,6 +616,30 @@ def admin_system_logs():
             return ok(logs=[line.strip() for line in logs])
     except Exception as ex:
         return err("internal_error", f"Failed to read logs: {ex}", 500)
+
+@app.post("/api/storage/upload")
+def upload_file():
+    optional_auth()
+    if 'file' not in request.files:
+        return err("invalid_param", "No file part in the request")
+    file = request.files['file']
+    if file.filename == '':
+        return err("invalid_param", "No selected file")
+    
+    import uuid
+    from werkzeug.utils import secure_filename
+    
+    ext = os.path.splitext(file.filename)[1]
+    filename = secure_filename(f"{uuid.uuid4().hex}{ext}")
+    path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    
+    file.save(path)
+    
+    return ok(
+        path=os.path.abspath(path),
+        filename=file.filename,
+        size=os.path.getsize(path)
+    ), 201
 
 # ===========================================================================
 # FILES (public/optional-auth)

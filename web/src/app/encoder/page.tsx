@@ -12,15 +12,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 export default function EncoderPage() {
     const router = useRouter()
-    const [pathInput, setPathInput] = useState('')
-    const [advanced, setAdvanced] = useState(false)
-    const [isDragging, setIsDragging] = useState(false)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const [overrides, setOverrides] = useState({
-        block_size: 2,
-        ecc_bytes: 32,
-        threads: 4,
-        encoder: 'libx264'
+    const uploadFile = useMutation({
+        mutationFn: (file: File) => storageApi.upload(file),
     })
 
     const startJob = useMutation({
@@ -30,13 +26,25 @@ export default function EncoderPage() {
         }
     })
 
-    const handleSubmit = (e?: React.FormEvent) => {
+    const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault()
-        if (!pathInput) return
+        if (!selectedFile && !pathInput) return
         
-        const outVideo = pathInput + '.encoded.mp4'
+        let serverPath = pathInput.trim()
+        
+        if (selectedFile) {
+            try {
+                const uploadRes = await uploadFile.mutateAsync(selectedFile)
+                serverPath = uploadRes.path
+            } catch (err) {
+                alert('Upload failed. Please try again.')
+                return
+            }
+        }
+
+        const outVideo = serverPath + '.encoded.mp4'
         startJob.mutate({
-            input_file: pathInput.trim(),
+            input_file: serverPath,
             output_video: outVideo,
             register_in_db: true,
             overrides: advanced ? overrides : undefined
@@ -57,12 +65,27 @@ export default function EncoderPage() {
         setIsDragging(false)
         const file = e.dataTransfer.files[0]
         if (file) {
+            setSelectedFile(file)
+            setPathInput(file.name)
+        }
+    }
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setSelectedFile(file)
             setPathInput(file.name)
         }
     }
 
     return (
         <div className="max-w-5xl mx-auto pb-20">
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleFileSelect}
+            />
             <header className="page-header mb-12 flex items-end justify-between">
                 <div>
                     <h1 className="page-title text-glow flex items-center gap-3">
@@ -95,21 +118,22 @@ export default function EncoderPage() {
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
+                        onClick={() => fileInputRef.current?.click()}
                         animate={{ 
                             borderColor: isDragging ? 'var(--accent-primary)' : 'var(--border-subtle)',
                             backgroundColor: isDragging ? 'var(--bg-glass-hover)' : 'var(--bg-glass)',
                             scale: isDragging ? 1.01 : 1
                         }}
-                        className="drop-zone relative overflow-hidden group"
+                        className="drop-zone relative overflow-hidden group cursor-pointer"
                         style={{ minHeight: '340px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
                     >
                         <div className="absolute top-4 right-4 text-xs font-mono text-muted uppercase tracking-widest opacity-30">
                             V5 Codec Engine
                         </div>
                         
-                        <div className={`transition-all duration-500 ${isDragging ? 'scale-110' : 'scale-100'}`}>
+                        <div className={`transition-all duration-500 ${isDragging || selectedFile ? 'scale-110' : 'scale-100'}`}>
                             <div className="w-20 h-20 rounded-3xl bg-accent-glow flex items-center justify-center mb-6 relative">
-                                <Box size={40} className="text-accent relative z-10" />
+                                {selectedFile ? <File size={40} className="text-accent relative z-10" /> : <Box size={40} className="text-accent relative z-10" />}
                                 <motion.div 
                                     animate={{ rotate: 360 }}
                                     transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
@@ -118,18 +142,23 @@ export default function EncoderPage() {
                             </div>
                         </div>
 
-                        <h3 className="text-xl font-bold font-display mb-2">Drop payload here</h3>
+                        <h3 className="text-xl font-bold font-display mb-2">
+                            {selectedFile ? selectedFile.name : 'Drop payload here'}
+                        </h3>
                         <p className="text-muted text-sm max-w-xs mx-auto mb-8">
-                            Drag any file to begin the Reed-Solomon encoding process.
+                            {selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB ready` : 'Drag any file or click to browse for the Reed-Solomon process.'}
                         </p>
 
-                        <div className="w-full max-w-md px-8">
+                        <div className="w-full max-w-md px-8" onClick={e => e.stopPropagation()}>
                             <div className="relative group/input">
                                 <input
                                     className="input pr-12 text-center font-mono text-sm"
-                                    placeholder="Or paste absolute server path..."
+                                    placeholder="Or manually enter server path..."
                                     value={pathInput}
-                                    onChange={e => setPathInput(e.target.value)}
+                                    onChange={e => {
+                                        setPathInput(e.target.value)
+                                        setSelectedFile(null)
+                                    }}
                                 />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted group-focus-within/input:text-accent transition-colors">
                                     <MousePointer2 size={16} />
@@ -163,10 +192,10 @@ export default function EncoderPage() {
                         </div>
                         <button
                             onClick={() => handleSubmit()}
-                            disabled={!pathInput || startJob.isPending}
+                            disabled={(!pathInput && !selectedFile) || uploadFile.isPending || startJob.isPending}
                             className="btn btn-primary h-12 px-10 group"
                         >
-                            {startJob.isPending ? 'Working...' : 'Commence'}
+                            {uploadFile.isPending ? 'Uploading...' : startJob.isPending ? 'Processing...' : 'Commence'}
                             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                         </button>
                     </div>

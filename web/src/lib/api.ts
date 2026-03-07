@@ -142,3 +142,24 @@ export const adminApi = {
     logs: () => get('/api/admin/system/logs'),
   },
 }
+
+export const storageApi = {
+  upload: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/api/storage/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
+}
+
+// ─── Storage ──────────────────────────────────────────────────────
+export const storageApi = {
+  upload: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/api/storage/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
+}
