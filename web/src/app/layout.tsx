@@ -8,6 +8,8 @@ import { usePathname } from 'next/navigation'
 
 const NO_SIDEBAR_ROUTES = ['/']
 
+import { RenderWakeupGate } from '@/components/RenderWakeupGate'
+
 function LayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const hideSidebar = NO_SIDEBAR_ROUTES.includes(pathname)
@@ -16,7 +18,9 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
         <div className="mesh-bg" />
-        {children}
+        <RenderWakeupGate>
+          {children}
+        </RenderWakeupGate>
       </div>
     )
   }
@@ -27,7 +31,9 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <main className="main-content">
         <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-          {children}
+          <RenderWakeupGate>
+            {children}
+          </RenderWakeupGate>
         </div>
       </main>
     </div>
