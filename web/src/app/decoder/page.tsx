@@ -2,10 +2,10 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { jobsApi } from '@/lib/api'
-import { 
-  Download, Youtube, Play, CheckCircle2, 
-  Search, FileVideo, HardDrive, 
-  ArrowRight, ShieldCheck, Zap
+import {
+    Download, Youtube, Play, CheckCircle2,
+    Search, FileVideo, HardDrive,
+    ArrowRight, ShieldCheck, Zap
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -17,6 +17,7 @@ export default function DecoderPage() {
     const [pathInput, setPathInput] = useState('')
     const [ytUrl, setYtUrl] = useState('')
     const [outPath, setOutPath] = useState('')
+    const [useRemote, setUseRemote] = useState(false)
 
     const startLocalDecode = useMutation({
         mutationFn: (data: any) => jobsApi.pipelineDecodeStart(data),
@@ -35,7 +36,8 @@ export default function DecoderPage() {
             if (!pathInput || !outPath) return
             startLocalDecode.mutate({
                 video_path: pathInput.trim(),
-                output_file: outPath.trim()
+                output_file: outPath.trim(),
+                managed: useRemote
             })
         } else {
             alert("YouTube auto-recovery is in development. Please provide the local video path.")
@@ -139,23 +141,45 @@ export default function DecoderPage() {
                                         <HardDrive size={18} />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div className="p-6 bg-surface/50 border-t border-subtle flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-xs text-muted">
-                                <ShieldCheck size={14} className="text-success" />
-                                RS Reconstruction Engine v5.0
+                                {/* Remote Worker Toggle */}
+                                <div className="flex items-center justify-between p-4 bg-accent/5 border border-accent/20 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
+                                            <Zap size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-primary">Nebula Supercompute</p>
+                                            <p className="text-[10px] text-muted uppercase tracking-wider">Offload extraction to remote GPU nodes</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setUseRemote(!useRemote)}
+                                        className={`relative w-12 h-6 rounded-full transition-colors ${useRemote ? 'bg-success' : 'bg-surface-light border border-subtle'}`}
+                                    >
+                                        <motion.div
+                                            animate={{ x: useRemote ? 24 : 4 }}
+                                            className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                                        />
+                                    </button>
+                                </div>
                             </div>
-                            <button
-                                onClick={() => handleSubmit()}
-                                disabled={startLocalDecode.isPending || (!pathInput && !ytUrl) || !outPath}
-                                className="btn btn-primary h-12 px-10 gap-3"
-                                style={{ background: 'var(--success)', color: 'white' }}
-                            >
-                                {startLocalDecode.isPending ? 'Processing...' : 'Start Extraction'}
-                                <Zap size={18} />
-                            </button>
+
+                            <div className="p-6 bg-surface/50 border-t border-subtle flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-xs text-muted">
+                                    <ShieldCheck size={14} className="text-success" />
+                                    RS Reconstruction Engine v5.0
+                                </div>
+                                <button
+                                    onClick={() => handleSubmit()}
+                                    disabled={startLocalDecode.isPending || (!pathInput && !ytUrl) || !outPath}
+                                    className="btn btn-primary h-12 px-10 gap-3"
+                                    style={{ background: 'var(--success)', color: 'white' }}
+                                >
+                                    {startLocalDecode.isPending ? 'Processing...' : 'Start Extraction'}
+                                    <Zap size={18} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

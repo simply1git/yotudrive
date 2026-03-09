@@ -1036,9 +1036,23 @@ def pipeline_decode():
     overrides = data.get("overrides", {})
     threads = int(overrides.get("threads", _settings().get("threads", 4)))
     owner = g.user["email"] if g.user else None
-    job = _jobs().create_job("pipeline_decode", owner_email=owner)
-    cancel = threading.Event()
+    managed = bool(data.get("managed", False))
+
+    # Create job with enough metadata for worker if managed
+    job_meta = {
+        "video_path": video_path,
+        "output_file": output_file,
+        "password": password,
+        "threads": threads
+    }
+    job = _jobs().create_job("pipeline_decode", owner_email=owner, managed=managed)
     job_id = job["id"]
+    _jobs().update_job(job_id, result=job_meta) # Store params in result for worker to find
+
+    if managed:
+        return ok(job_id=job_id, managed=True), 202
+
+    cancel = threading.Event()
 
     def run():
         import tempfile, os as _os, shutil

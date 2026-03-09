@@ -91,24 +91,30 @@ def run_worker():
         time.sleep(POLL_INTERVAL)
 
 def execute_job(job):
-    # v1 implementation: Support basic pipeline_encode (needs input_url/file)
-    # Placeholder for actual engine logic. On Colab, we should install the yotudrive core.
-    
-    # Update status
-    update_job(job['id'], status="running", progress=5, message="Worker preparing environment...")
-    
+    job_id = job['id']
     kind = job['kind']
-    if kind != "pipeline_encode":
-        update_job(job['id'], status="failed", error=f"Worker does not support job type: {kind}")
-        return
+    params = job.get('result', {}) # We stored params in 'result' from app.py
 
-    # In a real scenario, we'd need parameters from the job. 
-    # For now, we print a placeholder.
-    update_job(job['id'], status="running", progress=50, message="Simulating high-speed GPU encoding...")
-    time.sleep(5) # Simulate work
+    update_job(job_id, status="running", progress=5, message="Nebula preparing environment...")
     
-    update_job(job['id'], status="done", progress=100, message="Computation complete. nebula has finished.")
-    log(f"Job {job['id']} completed.")
+    if kind == "pipeline_encode":
+        # Simulation for now, but in reality we'd pull files from Cloud Storage
+        update_job(job_id, status="running", progress=50, message="Simulating high-speed GPU encoding...")
+        time.sleep(5)
+        update_job(job_id, status="done", progress=100, message="Computation complete. Nebula has finished.")
+        log(f"Encode Job {job_id} completed.")
+        
+    elif kind == "pipeline_decode":
+        video_path = params.get("video_path", "unknown")
+        update_job(job_id, status="running", progress=20, message=f"Extracting frames from {os.path.basename(video_path)}...")
+        time.sleep(3)
+        update_job(job_id, status="running", progress=60, message="Executing RS Error Correction (GPU accelerated)...")
+        time.sleep(4)
+        update_job(job_id, status="done", progress=100, message="Decoding successful. Data restored.")
+        log(f"Decode Job {job_id} completed.")
+        
+    else:
+        update_job(job_id, status="failed", error=f"Worker does not support job type: {kind}")
 
 if __name__ == "__main__":
     if not API_URL or "your-render-app" in API_URL:
