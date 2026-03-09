@@ -19,6 +19,7 @@ gunicorn==21.2.0
 
 # Database
 psycopg2-binary
+supabase
 
 # Google OAuth + YouTube API (optional — needed for /api/upload/oauth/start)
 google-auth

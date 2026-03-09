@@ -8,6 +8,9 @@ DB_FILE = "yotudrive.json"
 
 class FileDatabase:
     def __new__(cls, db_path: str = DB_FILE):
+        if os.environ.get("SUPABASE_URL"):
+            from src.supabase_store import SupaFileDatabase
+            return SupaFileDatabase()
         if os.environ.get("DATABASE_URL"):
             from src.pg_store import PGFileDatabase
             return PGFileDatabase()

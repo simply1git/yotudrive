@@ -1,8 +1,9 @@
-/**
- * YotuDrive API Client
- * Axios instance + React Query hooks + auth interceptor
- */
 import axios from 'axios'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Allow override via env for desktop (Electron points to local Flask)
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'

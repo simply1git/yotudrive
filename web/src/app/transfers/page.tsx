@@ -1,6 +1,6 @@
-'use client'
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { jobsApi, Job } from '@/lib/api'
+import { jobsApi, Job, supabase } from '@/lib/api'
 import { Activity, XCircle, CheckCircle2, Clock, PlayCircle, Loader2, Trash2 } from 'lucide-react'
 
 function getStatusIcon(status: string) {
@@ -27,7 +27,7 @@ function getBadgeClass(status: string) {
 
 function JobCard({ job }: { job: Job }) {
     const queryClient = useQueryClient()
-    
+
     const cancelMutation = useMutation({
         mutationFn: (id: string) => jobsApi.cancel(id),
         onSuccess: () => {
@@ -100,13 +100,30 @@ function JobCard({ job }: { job: Job }) {
 
 export default function TransfersPage() {
     const queryClient = useQueryClient()
-    
+
     // Polling every 2s
     const { data, isLoading, isError } = useQuery({
         queryKey: ['jobs'],
         queryFn: () => jobsApi.list({ limit: 50 }),
-        refetchInterval: 2000
+        refetchInterval: 10000 // Fallback poll every 10s (realtime handles the rest)
     })
+
+    useEffect(() => {
+        const channel = supabase
+            .channel('schema-db-changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'jobs' },
+                () => {
+                    queryClient.invalidateQueries({ queryKey: ['jobs'] })
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [queryClient])
     const clearMutation = useMutation({
         mutationFn: () => jobsApi.clear(),
         onSuccess: () => {

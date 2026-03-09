@@ -269,7 +269,10 @@ _job_store: Optional[JobStore] = None
 def get_job_store() -> JobStore:
     global _job_store
     if _job_store is None:
-        if os.environ.get("DATABASE_URL"):
+        if os.environ.get("SUPABASE_URL"):
+            from src.supabase_store import SupaJobStore
+            _job_store = SupaJobStore()
+        elif os.environ.get("DATABASE_URL"):
             from src.pg_store import PGJobStore
             _job_store = PGJobStore()
         else:

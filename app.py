@@ -48,7 +48,10 @@ init_services()
 def _auth():
     global _auth_store
     if _auth_store is None:
-        if os.environ.get("DATABASE_URL"):
+        if os.environ.get("SUPABASE_URL"):
+            from src.supabase_store import SupaAuthStore
+            _auth_store = SupaAuthStore()
+        elif os.environ.get("DATABASE_URL"):
             from src.pg_store import PGAuthStore
             _auth_store = PGAuthStore()
         else:
@@ -672,11 +675,22 @@ def upload_file():
     
     import uuid
     from werkzeug.utils import secure_filename
-    
     ext = os.path.splitext(file.filename)[1]
     filename = secure_filename(f"{uuid.uuid4().hex}{ext}")
+
+    if os.environ.get("SUPABASE_URL"):
+        from src.supabase_store import get_supabase_client
+        supabase = get_supabase_client()
+        content = file.read()
+        supabase.storage.from_("yotudrive-archives").upload(filename, content)
+        return ok(
+            path=filename,
+            filename=file.filename,
+            size=len(content),
+            storage="supabase"
+        ), 201
+
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    
     file.save(path)
     
     return ok(
